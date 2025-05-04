@@ -16,7 +16,59 @@ sudo chroot Arkbuild/ bash -c "rm -rf /home/ark/EmulationStation-fcamod"
 sudo chroot Arkbuild/ bash -c "rm -rf /home/ark/libgo2"
 sudo chroot Arkbuild/ bash -c "rm -rf /home/ark/linux-rga"
 sudo chroot Arkbuild/ bash -c "rm -rf /home/ark/rk3326_core_builds"
-sudo chroot Arkbuild/ bash -c "apt-get remove -y build-essential libstdc++-12-dev g++ libboost-system-dev libboost-filesystem-dev libboost-locale-dev libfreeimage-dev libfreetype6-dev libeigen3-dev libcurl4-openssl-dev libboost-date-time-dev libasound2-dev cmake libsdl2-image-dev libsdl2-ttf-dev rapidjson-dev libvlc-dev libvlccore-dev libsdl2-mixer-dev premake4 libopenal-dev libevdev-dev ninja-build autotools-dev"
+sudo chroot Arkbuild/ bash -c "apt-get remove -y autotools-dev \
+  build-essential \
+  cmake \
+  g++ \
+  g++-12 \
+  gcc-12 \
+  liba52-0.7.4-dev \
+  libasound2-dev \
+  libboost-date-time-dev \
+  libboost-filesystem-dev \
+  libboost-locale-dev \
+  libboost-system-dev \
+  libcurl4-openssl-dev \
+  libdrm-dev \
+  libeigen3-dev \
+  libevdev-dev \
+  libxext-dev \
+  libfaad-dev \
+  libflac-dev \
+  libfreeimage-dev \
+  libfreetype6-dev \
+  libfribidi-dev \
+  libglew-dev \
+  libjpeg62-turbo-dev \
+  libmad0-dev \
+  libmpeg2-4-dev \
+  libnl-3-dev \
+  libnl-genl-3-dev \
+  libnl-route-3-dev \
+  libogg-dev \
+  libopenal-dev \
+  libpng-dev \
+  libsdl2-image-dev \
+  libsdl2-mixer-dev \
+  libsdl2-net-dev \
+  libsdl2-ttf-dev \
+  libsm-dev \
+  libspeechd-dev \
+  libstdc++-12-dev \
+  libtheora-dev \
+  libudev-dev \
+  libvlc-dev \
+  libvlccore-dev \
+  libvorbis-dev \
+  libx11-dev \
+  libx11-xcb1 \
+  libxcb-dri2-0 \
+  ninja-build \
+  pkg-config \
+  premake4 \
+  rapidjson-dev \
+  zlib1g-dev"
+
 sudo chroot Arkbuild/ bash -c "apt-get -y autoremove"
 sudo chroot Arkbuild/ apt-get clean
 cd Arkbuild/usr/lib/aarch64-linux-gnu
@@ -27,8 +79,8 @@ do
 done
 cd ../../../../
 
-#sudo chroot Arkbuild/ bash -c "ln -sfv /usr/lib/aarch64-linux-gnu/libSDL2.so /usr/lib/aarch64-linux-gnu/libSDL2-2.0.so.0"
-#sudo chroot Arkbuild/ bash -c "ln -sfv /usr/lib/aarch64-linux-gnu/libSDL2-2.0.so.0.${extension} /usr/lib/aarch64-linux-gnu/libSDL2.so"
+sudo chroot Arkbuild/ bash -c "ln -sfv /usr/lib/aarch64-linux-gnu/libSDL2.so /usr/lib/aarch64-linux-gnu/libSDL2-2.0.so.0"
+sudo chroot Arkbuild/ bash -c "ln -sfv /usr/lib/aarch64-linux-gnu/libSDL2-2.0.so.0.${extension} /usr/lib/aarch64-linux-gnu/libSDL2.so"
 #sudo chroot Arkbuild/ bash -c "ln -sfv /usr/lib/arm-linux-gnueabihf/libSDL2.so /usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0"
 #sudo chroot Arkbuild/ bash -c "ln -sfv /usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0.${extension} /usr/lib/arm-linux-gnueabihf/libSDL2.so"
-#sudo chroot Arkbuild/ ldconfig
+sudo chroot Arkbuild/ ldconfig

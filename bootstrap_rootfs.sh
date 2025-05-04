@@ -8,9 +8,10 @@ if ! [ -f /usr/bin/qemu-aarch64-static ]; then
 fi
 
 # Bootstrap base system
-sudo debootstrap --no-check-gpg --arch=arm64 --foreign bookworm Arkbuild http://deb.debian.org/debian/
+sudo eatmydata debootstrap --no-check-gpg --include=eatmydata --resolve-deps --arch=arm64 --foreign trixie Arkbuild http://deb.debian.org/debian/
 sudo cp /usr/bin/qemu-aarch64-static Arkbuild/usr/bin/
-sudo chroot Arkbuild/ /debootstrap/debootstrap --second-stage
+sudo chroot Arkbuild/ apt-get -y install eatmydata
+sudo chroot Arkbuild/ eatmydata /debootstrap/debootstrap --second-stage
 
 # Bind essential host filesystems into chroot for networking
 sudo mount --bind /dev Arkbuild/dev
@@ -26,32 +27,43 @@ sudo chroot Arkbuild/ mount -t proc proc /proc
 
 # Enable armhf architecture and update
 sudo chroot Arkbuild/ dpkg --add-architecture armhf
-sudo chroot Arkbuild/ apt-get -y update
-sudo chroot Arkbuild/ apt-get -y install libc6:armhf
+sudo chroot Arkbuild/ eatmydata apt-get -y update
+sudo chroot Arkbuild/ eatmydata apt-get -y install libc6:armhf liblzma5:armhf libasound2t64:armhf libfreetype6:armhf libxkbcommon-x11-0:armhf libudev1:armhf libgbm1:armhf
 
 # Install base runtime packages
-sudo chroot Arkbuild/ apt-get install -y initramfs-tools sudo evtest network-manager systemd-sysv locales locales-all ssh dosfstools
-sudo chroot Arkbuild/ apt-get install -y python3 python3-pip
+sudo chroot Arkbuild/ eatmydata apt-get install -y initramfs-tools sudo evtest network-manager systemd-sysv locales locales-all ssh dosfstools fluidsynth
+sudo chroot Arkbuild/ eatmydata apt-get install -y python3 python3-pip
 sudo chroot Arkbuild/ bash -c "export LC_All=C.UTF-8 && update-locale"
 sudo chroot Arkbuild/ systemctl enable NetworkManager
 
 # Install libmali, DRM, and GBM libraries for rk3326
-sudo chroot Arkbuild/ apt-get install -y libdrm-dev libgbm1
+sudo chroot Arkbuild/ eatmydata apt-get install -y libdrm-dev libgbm1
+
 # Place libmali manually (assumes you have libmali.so or mali drivers ready)
-sudo mkdir -p Arkbuild/usr/lib/aarch64-linux-gnu/
-wget -t 3 -T 60 --no-check-certificate https://github.com/christianhaitian/rk3326_core_builds/raw/refs/heads/rk3326/mali/aarch64/libmali-bifrost-g31-rxp0-gbm.so
-sudo mv libmali-bifrost-g31-rxp0-gbm.so Arkbuild/usr/lib/aarch64-linux-gnu/.
-whichmali="libmali-bifrost-g31-rxp0-gbm.so"
-cd Arkbuild/usr/lib/aarch64-linux-gnu
-sudo ln -sf ${whichmali} libMali.so
-for LIB in libEGL.so libEGL.so.1 libGLES_CM.so libGLES_CM.so.1 libGLESv1_CM.so libGLESv1_CM.so.1 libGLESv1_CM.so.1.1.0 libGLESv2.so libGLESv2.so.2 libGLESv2.so.2.0.0 libGLESv2.so.2.1.0 libGLESv3.so libGLESv3.so.3 libgbm.so libgbm.so.1 libgbm.so.1.0.0 libmali.so libmali.so.1 libMaliOpenCL.so libOpenCL.so libwayland-egl.so libwayland-egl.so.1 libwayland-egl.so.1.0.0
+for ARCHITECTURE in aarch64-linux-gnu arm-linux-gnueabihf
 do
-  sudo rm -fv ${LIB}
-  sudo ln -sfv libMali.so ${LIB}
+  if [ "$ARCHITECTURE" == "aarch64-linux-gnu" ]; then
+    FOLDER="aarch64"
+  else
+    FOLDER="armhf"
+  fi
+  sudo mkdir -p Arkbuild/usr/lib/${ARCHITECTURE}/
+  wget -t 3 -T 60 --no-check-certificate https://github.com/christianhaitian/rk3326_core_builds/raw/refs/heads/rk3326/mali/${FOLDER}/libmali-bifrost-g31-rxp0-gbm.so
+  sudo mv libmali-bifrost-g31-rxp0-gbm.so Arkbuild/usr/lib/${ARCHITECTURE}/.
+  whichmali="libmali-bifrost-g31-rxp0-gbm.so"
+  cd Arkbuild/usr/lib/${ARCHITECTURE}
+  sudo ln -sf ${whichmali} libMali.so
+  for LIB in libEGL.so libEGL.so.1 libGLES_CM.so libGLES_CM.so.1 libGLESv1_CM.so libGLESv1_CM.so.1 libGLESv1_CM.so.1.1.0 libGLESv2.so libGLESv2.so.2 libGLESv2.so.2.0.0 libGLESv2.so.2.1.0 libGLESv3.so libGLESv3.so.3 libgbm.so libgbm.so.1 libgbm.so.1.0.0 libmali.so libmali.so.1 libMaliOpenCL.so libOpenCL.so libwayland-egl.so libwayland-egl.so.1 libwayland-egl.so.1.0.0
+  do
+    sudo rm -fv ${LIB}
+    sudo ln -sfv libMali.so ${LIB}
+  done
+  cd ../../../../
 done
-cd ../../../../
 sudo chroot Arkbuild/ ldconfig
+sleep 10
 setup_ark_user
+sleep 10
 echo -e "Generating /etc/fstab"
 echo -e "LABEL=ROOTFS / ext4 defaults, noatime 0 1
 LABEL=BOOT /boot vfat defaults 0 0
@@ -77,5 +89,7 @@ ATTR{idVendor}==\"0bda\", ATTR{idProduct}==\"1a2b\", RUN+=\"/usr/sbin/usb_modesw
 ATTR{idVendor}==\"0bda\", ATTR{idProduct}==\"c811\", RUN+=\"/usr/sbin/usb_modeswitch -K -v 0bda -p c811\"
 
 LABEL=\"end_modeswitch\"" | sudo tee Arkbuild/etc/udev/rules.d/40-usb_modeswitch.rules
+sudo chroot Arkbuild/ sync
+sleep 5
 sudo chroot Arkbuild/ umount /proc
 

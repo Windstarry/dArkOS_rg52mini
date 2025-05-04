@@ -58,14 +58,17 @@ sudo chmod 777 Arkbuild/usr/local/bin/spktoggle.sh
 sudo chroot Arkbuild/ bash -c "(crontab -l 2>/dev/null; echo \"@reboot /usr/local/bin/spktoggle.sh &\") | crontab -"
 #sudo cp scripts/audiopath.service Arkbuild/etc/systemd/system/audiopath.service
 sudo cp scripts/audiostate.service Arkbuild/etc/systemd/system/audiostate.service
-#sudo chroot Arkbuild/ bash -c "systemctl daemon-reload && systemctl enable audiopath"
-sudo chroot Arkbuild/ bash -c "systemctl daemon-reload && systemctl enable audiostate"
+#sudo chroot Arkbuild/ bash -c "systemctl enable audiopath"
+sudo chroot Arkbuild/ bash -c "systemctl enable audiostate"
 
 # Disable getty on tty0 and tty1
 sudo chroot Arkbuild/ bash -c "systemctl disable getty@tty0.service getty@tty1.service"
 
 # Disable some other unneeded services
 sudo chroot Arkbuild/ bash -c "systemctl disable ModemManager polkit"
+
+# Disable ssh service from automatically starting
+sudo chroot Arkbuild/ bash -c "systemctl disable ssh"
 
 # Update Messaage of the Day
 sudo cp -f scripts/00-header Arkbuild/etc/update-motd.d/00-header
@@ -93,6 +96,8 @@ sudo cp scripts/pause.sh Arkbuild/usr/local/bin/
 sudo cp scripts/speak_bat_life.sh Arkbuild/usr/local/bin/
 sudo cp scripts/spktoggle.sh Arkbuild/usr/local/bin/
 sudo cp scripts/timezones Arkbuild/usr/local/bin/
+sudo cp global/* Arkbuild/usr/local/bin/
+sudo cp device/rgb10/* Arkbuild/usr/local/bin/
 
 # Make all scripts in /usr/local/bin executable, world style
 sudo chmod 777 Arkbuild/usr/local/bin/*
@@ -104,6 +109,9 @@ sudo chroot Arkbuild/ bash -c "ln -sfv /roms/themes/ /etc/emulationstation/theme
 # Set launchimage to PIC mode
 sudo chroot Arkbuild/ touch /home/ark/.config/.GameLoadingIModePIC
 sudo chroot Arkbuild/ bash -c "chown -R ark:ark /home/ark"
+
+# Set default volume
+sudo cp audio/asound.state.rk3326 Arkbuild/var/local/asound.state
 
 # Set the locale
 
@@ -144,11 +152,13 @@ done <game_systems.txt
 sudo cp launchimages/loading.ascii.rgb10 ${fat32_mountpoint}/launchimages/loading.ascii
 sudo cp launchimages/loading.jpg.rgb10 ${fat32_mountpoint}/launchimages/loading.jpg
 
+# Copy various tools to roms folders
+sudo cp -a ecwolf/Scan* ${fat32_mountpoint}/wolf/
+
 # Clone some themes to the roms/themes folder
 sudo git clone https://github.com/Jetup13/es-theme-nes-box.git ${fat32_mountpoint}/themes/es-theme-nes-box
 
 # Remove and cleanup fat32 roms mountpoint
-sudo chown -R ark:ark ${fat32_mountpoint}
 sudo chmod -R 755 ${fat32_mountpoint}
 sync
 sudo umount ${fat32_mountpoint}

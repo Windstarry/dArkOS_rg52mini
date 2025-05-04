@@ -9,19 +9,84 @@ function verify_action() {
 }
 
 function setup_ark_user() {
-  sudo chroot Arkbuild/ useradd ark -k /etc/skel -d /home/ark -m -s /bin/bash
-  sudo chroot Arkbuild/ bash -c "echo ark:ark | sudo chpasswd"
-  sudo chroot Arkbuild/ chage -I -1 -m 0 -M 99999 -E -1 ark
-  sudo mkdir -p Arkbuild/etc/sudoers.d
-  echo "ark     ALL= NOPASSWD: ALL" | sudo tee Arkbuild/etc/sudoers.d/ark-no-sudo-password
-  echo "Defaults        !secure_path" | sudo tee Arkbuild/etc/sudoers.d/ark-no-secure-path
-  sudo chmod 0440 Arkbuild/etc/sudoers.d/ark-no-sudo-password
-  sudo chmod 0440 Arkbuild/etc/sudoers.d/ark-no-secure-path
-  sudo chroot Arkbuild/ usermod -G video,sudo,netdev,input,audio,adm ark
+  if [ "$1" == "32" ]; then
+    CHROOT_DIR="Arkbuild32"
+  else
+    CHROOT_DIR="Arkbuild"
+  fi
+  sudo chroot ${CHROOT_DIR}/ useradd ark -k /etc/skel -d /home/ark -m -s /bin/bash
+  sudo chroot ${CHROOT_DIR}/ bash -c "echo ark:ark | chpasswd"
+  sudo chroot ${CHROOT_DIR}/ chage -I -1 -m 0 -M 99999 -E -1 ark
+  sudo mkdir -p ${CHROOT_DIR}/etc/sudoers.d
+  echo "ark     ALL= NOPASSWD: ALL" | sudo tee ${CHROOT_DIR}/etc/sudoers.d/ark-no-sudo-password
+  echo "Defaults        !secure_path" | sudo tee ${CHROOT_DIR}/etc/sudoers.d/ark-no-secure-path
+  sudo chmod 0440 ${CHROOT_DIR}/etc/sudoers.d/ark-no-sudo-password
+  sudo chmod 0440 ${CHROOT_DIR}/etc/sudoers.d/ark-no-secure-path
+  sudo chroot ${CHROOT_DIR}/ usermod -G video,sudo,netdev,input,audio,adm,ark ark
   directories=(".config" ".emulationstation")
   for dir in "${directories[@]}"; do
-    sudo mkdir -p "Arkbuild/home/ark/${dir}"
+    sudo mkdir -p "${CHROOT_DIR}/home/ark/${dir}"
   done
-  sudo chroot Arkbuild/ chown -R ark:ark /home/ark/
+  sudo chroot ${CHROOT_DIR}/ chown -R ark:ark /home/ark/
 }
 
+function setup_arkbuild32() {
+  if [ ! -d Arkbuild32 ]; then
+    # Bootstrap base system
+    sudo debootstrap --no-check-gpg --include=eatmydata --resolve-deps --arch=armhf --foreign bookworm Arkbuild32 http://deb.debian.org/debian/
+    sudo cp /usr/bin/qemu-arm-static Arkbuild32/usr/bin/
+    sudo chroot Arkbuild32/ apt-get -y install eatmydata
+    sudo chroot Arkbuild32/ eatmydata /debootstrap/debootstrap --second-stage
+
+    # Bind essential host filesystems into chroot for networking
+    sudo mount --bind /dev Arkbuild32/dev
+    sudo mount --bind /dev/pts Arkbuild32/dev/pts
+    sudo mount --bind /proc Arkbuild32/proc
+    sudo mount --bind /sys Arkbuild32/sys
+    echo -e "nameserver 8.8.8.8\nnameserver 1.1.1.1" | sudo tee Arkbuild32/etc/resolv.conf > /dev/null
+    # Install libmali, DRM, and GBM libraries for rk3326
+    sudo chroot Arkbuild32/ apt-get install -y libdrm-dev libgbm1
+    # Place libmali manually (assumes you have libmali.so or mali drivers ready)
+    sudo mkdir -p Arkbuild32/usr/lib/arm-linux-gnueabihf/
+    wget -t 3 -T 60 --no-check-certificate https://github.com/christianhaitian/rk3326_core_builds/raw/refs/heads/rk3326/mali/armhf/libmali-bifrost-g31-rxp0-gbm.so
+    sudo mv libmali-bifrost-g31-rxp0-gbm.so Arkbuild32/usr/lib/arm-linux-gnueabihf/.
+    whichmali="libmali-bifrost-g31-rxp0-gbm.so"
+    cd Arkbuild32/usr/lib/arm-linux-gnueabihf
+    sudo ln -sf ${whichmali} libMali.so
+    for LIB in libEGL.so libEGL.so.1 libGLES_CM.so libGLES_CM.so.1 libGLESv1_CM.so libGLESv1_CM.so.1 libGLESv1_CM.so.1.1.0 libGLESv2.so libGLESv2.so.2 libGLESv2.so.2.0.0 libGLESv2.so.2.1.0 libGLESv3.so libGLESv3.so.3 libgbm.so libgbm.so.1 libgbm.so.1.0.0 libmali.so libmali.so.1 libMaliOpenCL.so libOpenCL.so libwayland-egl.so libwayland-egl.so.1 libwayland-egl.so.1.0.0
+    do
+      sudo rm -fv ${LIB}
+      sudo ln -sfv libMali.so ${LIB}
+    done
+    cd ../../../../
+    sudo chroot Arkbuild32/ ldconfig
+    setup_ark_user 32
+    sudo mkdir -p Arkbuild32/home/ark
+	sudo chroot Arkbuild32/ umount /proc
+	source build_deps.sh 32
+	source build_sdl2.sh 32
+	sudo cp -a Arkbuild32/usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0.${extension} Arkbuild/usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0.${extension}
+	sudo chroot Arkbuild/ bash -c "ln -sfv /usr/lib/arm-linux-gnueabihf/libSDL2.so /usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0"
+    sudo chroot Arkbuild/ bash -c "ln -sfv /usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0.${extension} /usr/lib/arm-linux-gnueabihf/libSDL2.so"
+	sudo cp -a Arkbuild32/home/ark/linux-rga/build/librga.so* Arkbuild/usr/lib/arm-linux-gnueabihf/
+	sudo cp -a Arkbuild32/home/ark/libgo2/libgo2.so* Arkbuild/usr/lib/arm-linux-gnueabihf/
+  fi
+}
+
+function remove_arkbuild() {
+sudo umount Arkbuild/dev/pts
+sudo umount Arkbuild/dev
+sudo umount Arkbuild/proc
+sudo umount Arkbuild/sys
+sudo umount -l Arkbuild
+sudo rm -rf Arkbuild
+}
+
+function remove_arkbuild32() {
+  sudo umount Arkbuild32/dev/pts 
+  sudo umount Arkbuild32/dev 
+  sudo umount Arkbuild32/proc
+  sudo umount Arkbuild32/sys 
+  sudo umount -l Arkbuild32
+  sudo rm -rf Arkbuild32
+}

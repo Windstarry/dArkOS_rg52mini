@@ -13,13 +13,13 @@ parted -s "${DISK}" -a min unit s mkpart primary fat32 ${ROM_PART_START} ${ROM_P
 sync
 
 # Build uboot and install it to the image
-git clone --depth=1 https://github.com/christianhaitian/u-boot-rk3326
+git clone https://github.com/christianhaitian/u-boot-rk3326
 cd u-boot-rk3326
 ./make.sh odroidgoa
 
-dd if="sd_fuse/idbloader.img" of="${DISK}" bs=512 seek=64 conv=sync,noerror,notrunc
-dd if="sd_fuse/uboot.img" of="${DISK}" bs=512 seek=16384 conv=sync,noerror,notrunc
-dd if="sd_fuse/trust.img" of="${DISK}" bs=512 seek=24576 conv=sync,noerror,notrunc
+dd if="sd_fuse/idbloader.img" of="../${DISK}" bs=512 seek=64 conv=sync,noerror,notrunc
+dd if="sd_fuse/uboot.img" of="../${DISK}" bs=512 seek=16384 conv=sync,noerror,notrunc
+dd if="sd_fuse/trust.img" of="../${DISK}" bs=512 seek=24576 conv=sync,noerror,notrunc
 
 cd ..
 rm -rf u-boot-rk3326

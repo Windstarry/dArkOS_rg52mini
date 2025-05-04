@@ -15,8 +15,14 @@ source ./build_sdl2.sh
 source ./build_gptokeyb.sh
 source ./build_emulationstation.sh
 source ./build_retroarch.sh
+source ./build_mednafen.sh
+source ./build_ecwolfsa.sh
+source ./build_scummvmsa.sh
+source ./build_ppssppsa.sh
 source ./build_ogage.sh
 source ./build_351files.sh
+source ./build_filebrowser.sh
+source ./build_wpasupplicant.sh
 source ./finishing_touches.sh
 source ./cleanup_filesystem.sh
 source ./write_rootfs.sh

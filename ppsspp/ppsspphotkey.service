@@ -1,0 +1,15 @@
+[Unit]
+Description=ppssppgo Exit Hotkey service
+
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+
+ExecStart=/usr/local/bin/ppssppkeydemon.py
+
+[Install]
+WantedBy=multi-user.target
+

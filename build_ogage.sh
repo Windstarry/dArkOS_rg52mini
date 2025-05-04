@@ -12,4 +12,4 @@ sudo chroot Arkbuild/ bash -c "cd /home/ark &&
   "
 sudo rm -rf Arkbuild/home/ark/ogage
 sudo cp scripts/ogage.service Arkbuild/etc/systemd/system/ogage.service
-sudo chroot Arkbuild/ bash -c "systemctl daemon-reload && systemctl enable ogage"
+sudo chroot Arkbuild/ bash -c "systemctl enable ogage"

@@ -1,4 +1,5 @@
 # Retroarch cores that should be installed from https://github.com/christianhaitian/retroarch-cores
+ecwolf
 fbneo
 fceumm
 gambatte
@@ -6,3 +7,4 @@ gpsp
 mgba
 mgba_rumble
 nestopia
+pcsx_rearmed

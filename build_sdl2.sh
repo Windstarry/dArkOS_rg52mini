@@ -1,22 +1,41 @@
 #!/bin/bash
 
+if [ "$1" == "32" ]; then
+  ARCH="arm-linux-gnueabihf"
+  CHROOT_DIR="Arkbuild32"
+else
+  ARCH="aarch64-linux-gnu"
+  CHROOT_DIR="Arkbuild"
+fi
+
 # Build and install SDL2
-sudo chroot Arkbuild/ bash -c "cd /home/ark &&
-  git clone https://github.com/christianhaitian/rk3326_core_builds.git &&
-  cd rk3326_core_builds &&
-  chmod 777 builds-alt.sh &&
-  ./builds-alt.sh sdl2 &&
-  cd SDL/build &&
-  make install
-  "
+if [ "$ARCH" == "arm-linux-gnueabihf" ]; then
+  sudo chroot ${CHROOT_DIR}/ bash -c "cd /home/ark &&
+    if [ ! -d rk3326_core_builds ]; then git clone https://github.com/christianhaitian/rk3326_core_builds.git; fi &&
+    cd rk3326_core_builds &&
+    chmod 777 builds-alt.sh &&
+    ./builds-alt.sh sdl2 &&
+    cd SDL &&
+    make install
+    "
+else
+  sudo chroot ${CHROOT_DIR}/ bash -c "cd /home/ark &&
+    if [ ! -d rk3326_core_builds ]; then git clone https://github.com/christianhaitian/rk3326_core_builds.git; fi &&
+    cd rk3326_core_builds &&
+    chmod 777 builds-alt.sh &&
+    ./builds-alt.sh sdl2 &&
+    cd SDL/build &&
+    make install
+    "
+fi
 
 extension="3000.10"
-#sudo mv -f -v Arkbuild/home/ark/rk3326_core_builds/sdl2-64/libSDL2-2.0.so.0.${extension}.rotated Arkbuild/usr/lib/aarch64-linux-gnu/libSDL2-2.0.so.0.${extension}
-#sudo mv -f -v Arkbuild/home/ark/rk3326_core_builds/sdl2-32/libSDL2-2.0.so.0.${extension}.rotated Arkbuild/usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0.${extension}
-#sudo rm -rfv Arkbuild/home/ark/rk3326_core_builds/sdl2-64
-#sudo rm -rfv Arkbuild/home/ark/rk3326_core_builds/sdl2-32
-#sudo chroot Arkbuild/ bash -c "ln -sfv /usr/lib/aarch64-linux-gnu/libSDL2.so /usr/lib/aarch64-linux-gnu/libSDL2-2.0.so.0"
-#sudo chroot Arkbuild/ bash -c "ln -sfv /usr/lib/aarch64-linux-gnu/libSDL2-2.0.so.0.${extension} /usr/lib/aarch64-linux-gnu/libSDL2.so"
-#sudo chroot Arkbuild/ bash -c "ln -sfv /usr/lib/arm-linux-gnueabihf/libSDL2.so /usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0"
-#sudo chroot Arkbuild/ bash -c "ln -sfv /usr/lib/arm-linux-gnueabihf/libSDL2-2.0.so.0.${extension} /usr/lib/arm-linux-gnueabihf/libSDL2.so"
-sudo rm -rf Arkbuild/home/ark/rk3326_core_builds/SDL
+#sudo mv -f -v ${CHROOT_DIR}/home/ark/rk3326_core_builds/sdl2-64/libSDL2-2.0.so.0.${extension}.rotated ${CHROOT_DIR}/usr/lib/${ARCH}/libSDL2-2.0.so.0.${extension}
+#sudo mv -f -v ${CHROOT_DIR}/home/ark/rk3326_core_builds/sdl2-32/libSDL2-2.0.so.0.${extension}.rotated ${CHROOT_DIR}/usr/lib/${ARCH}/libSDL2-2.0.so.0.${extension}
+#sudo rm -rfv ${CHROOT_DIR}/home/ark/rk3326_core_builds/sdl2-64
+#sudo rm -rfv ${CHROOT_DIR}/home/ark/rk3326_core_builds/sdl2-32
+sudo chroot ${CHROOT_DIR}/ bash -c "ln -sfv /usr/lib/${ARCH}/libSDL2.so /usr/lib/${ARCH}/libSDL2-2.0.so.0"
+sudo chroot ${CHROOT_DIR}/ bash -c "ln -sfv /usr/lib/${ARCH}/libSDL2-2.0.so.0.${extension} /usr/lib/${ARCH}/libSDL2.so"
+#sudo chroot ${CHROOT_DIR}/ bash -c "ln -sfv /usr/lib/${ARCH}/libSDL2.so /usr/lib/${ARCH}/libSDL2-2.0.so.0"
+#sudo chroot ${CHROOT_DIR}/ bash -c "ln -sfv /usr/lib/${ARCH}/libSDL2-2.0.so.0.${extension} /usr/lib/${ARCH}/libSDL2.so"
+sudo rm -rf ${CHROOT_DIR}/home/ark/rk3326_core_builds/SDL

@@ -1,5 +1,6 @@
 # Game system folders to be created are listed below
 arcade
+bios
 cps1
 cps2
 cps3
@@ -9,4 +10,6 @@ gbc
 launchimages
 neogeo
 nes
+psx
 tools
+wolf

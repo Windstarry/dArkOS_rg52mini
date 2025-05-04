@@ -1,0 +1,4 @@
+# Retroarch32 cores that should be installed from https://github.com/christianhaitian/retroarch-cores
+gpsp
+pcsx_rearmed
+uae4arm
