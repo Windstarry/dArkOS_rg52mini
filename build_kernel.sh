@@ -7,8 +7,8 @@ if [ ! -d "$KERNEL_SRC" ]; then
 fi
 cd $KERNEL_SRC
 make ARCH=arm64 odroidgoa_tweaked_defconfig
-make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare
-make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image dtbs modules
+CFLAGS=-Wno-deprecated-declarations make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare
+CFLAGS=-Wno-deprecated-declarations make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image dtbs modules
 verify_action
 cd ..
 
