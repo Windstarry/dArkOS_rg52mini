@@ -1,6 +1,11 @@
 #!/bin/bash
 
-xz --keep -z -9 -T0 ArkOS_RGB10.img
+for IMAGE in *.img
+do
+  if [ ! -f ${IMAGE}.xz ]; then
+    xz --keep -z -9 -T0 ${IMAGE}
+  fi
+done
 if [ -d "/media/sf_VMShare" ]; then
   sudo rm -f /media/sf_VMShare/RGB10\ Boot/ArkOS_RGB10.img*
   sudo cp ArkOS_RGB10.img /media/sf_VMShare/RGB10\ Boot/ArkOS_RGB10.img

@@ -1,0 +1,95 @@
+#!/bin/bash
+
+echo -e "Installing build dependencies and needed packages...\n\n"
+
+if [ "$1" == "32" ]; then
+  BIT="32"
+  ARCH="arm-linux-gnueabihf"
+  CHROOT_DIR="Arkbuild32"
+else
+  BIT="64"
+  ARCH="aarch64-linux-gnu"
+  CHROOT_DIR="Arkbuild"
+fi
+
+# Install additional needed packages and protect them from autoremove
+while read NEEDED_PACKAGE; do
+  if [[ ! "$NEEDED_PACKAGE" =~ ^# ]]; then
+    install_package $BIT "${NEEDED_PACKAGE}"
+    protect_package $BIT "${NEEDED_PACKAGE}"
+  fi
+done <needed_packages.txt
+
+# Install build dependencies
+while read NEEDED_DEV_PACKAGE; do
+  if [[ ! "$NEEDED_DEV_PACKAGE" =~ ^# ]]; then
+    install_package $BIT "${NEEDED_DEV_PACKAGE}"
+    protect_package $BIT "${NEEDED_DEV_PACKAGE}"
+  fi
+done <needed_dev_packages.txt
+
+# Default gcc and g++ to version 12
+#sudo chroot ${CHROOT_DIR}/ bash -c "update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 10"
+#sudo chroot ${CHROOT_DIR}/ bash -c "update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 20"
+#sudo chroot ${CHROOT_DIR}/ bash -c "update-alternatives --set gcc \"/usr/bin/gcc-12\""
+#sudo chroot ${CHROOT_DIR}/ bash -c "update-alternatives --set g++ \"/usr/bin/g++-12\""
+
+# Bind ccache to chroot to speed up consecutive builds
+[ ! -d "${CHROOT_DIR}/home/ark/Arkbuild_ccache" ] && sudo mkdir -p ${CHROOT_DIR}/home/ark/Arkbuild_ccache
+sudo mount --bind ${PWD}/Arkbuild_ccache ${CHROOT_DIR}/home/ark/Arkbuild_ccache
+sudo chroot ${CHROOT_DIR}/ bash -c "[ -z \$(echo \$CCACHE_DIR | grep ccache) ]" && echo -e "export CCACHE_DIR=/home/ark/Arkbuild_ccache" | sudo tee -a ${CHROOT_DIR}/root/.bashrc > /dev/null
+sudo chroot ${CHROOT_DIR}/ bash -c "[ -z \$(echo \$PATH | grep ccache) ]" && echo -e "export PATH=/usr/lib/ccache:\$PATH" | sudo tee -a ${CHROOT_DIR}/root/.bashrc > /dev/null
+sudo chroot ${CHROOT_DIR}/ bash -c "/usr/sbin/update-ccache-symlinks"
+
+# Symlink fix for DRM headers
+sudo chroot ${CHROOT_DIR}/ bash -c "ln -s /usr/include/libdrm/ /usr/include/drm"
+
+# Place libmali manually (assumes you have libmali.so or mali drivers ready)
+for ARCHITECTURE in aarch64-linux-gnu arm-linux-gnueabihf
+do
+  if [ "$ARCHITECTURE" == "aarch64-linux-gnu" ]; then
+    FOLDER="aarch64"
+  else
+    FOLDER="armhf"
+  fi
+  sudo mkdir -p Arkbuild/usr/lib/${ARCHITECTURE}/
+  whichmali="libmali-bifrost-g52-g2p0-gbm.so"
+  wget -t 3 -T 60 --no-check-certificate https://github.com/christianhaitian/rk3566_core_builds/raw/refs/heads/rk3566/mali/${FOLDER}/${whichmali}
+  sudo mv ${whichmali} Arkbuild/usr/lib/${ARCHITECTURE}/.
+  cd Arkbuild/usr/lib/${ARCHITECTURE}
+  sudo ln -sf ${whichmali} libMali.so
+  for LIB in libEGL.so libEGL.so.1 libEGL.so.1.1.0 libGLES_CM.so libGLES_CM.so.1 libGLESv1_CM.so libGLESv1_CM.so.1 libGLESv1_CM.so.1.1.0 libGLESv2.so libGLESv2.so.2 libGLESv2.so.2.0.0 libGLESv2.so.2.1.0 libGLESv3.so libGLESv3.so.3 libgbm.so libgbm.so.1 libgbm.so.1.0.0 libmali.so libmali.so.1 libMaliOpenCL.so libOpenCL.so libwayland-egl.so libwayland-egl.so.1 libwayland-egl.so.1.0.0
+  do
+    sudo rm -fv ${LIB}
+    sudo ln -sfv libMali.so ${LIB}
+  done
+  cd ../../../../
+done
+sudo chroot Arkbuild/ ldconfig
+
+# Install meson
+sudo chroot ${CHROOT_DIR}/ bash -c "git clone https://github.com/mesonbuild/meson.git && ln -s /meson/meson.py /usr/bin/meson"
+
+# Build and install librga
+sudo chroot ${CHROOT_DIR}/ bash -c "cd /home/ark &&
+  git clone https://github.com/christianhaitian/linux-rga.git &&
+  cd linux-rga &&
+  git checkout 1fc02d56d97041c86f01bc1284b7971c6098c5fb &&
+  meson build && cd build &&
+  meson compile &&
+  cp -r librga.so* /usr/lib/${ARCH}/ &&
+  cd .. &&
+  mkdir -p /usr/local/include/rga &&
+  cp -f drmrga.h rga.h RgaApi.h RockchipRgaMacro.h /usr/local/include/rga/
+  "
+
+# Build and install libgo2
+sudo chroot ${CHROOT_DIR}/ bash -c "cd /home/ark &&
+  git clone https://github.com/OtherCrashOverride/libgo2.git &&
+  cd libgo2 &&
+  premake4 gmake &&
+  make -j$(nproc) &&
+  cp libgo2.so* /usr/lib/${ARCH}/ &&
+  mkdir -p /usr/include/go2 &&
+  cp -L src/*.h /usr/include/go2/
+  "

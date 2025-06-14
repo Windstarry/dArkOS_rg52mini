@@ -8,8 +8,9 @@ rgb10:
 clean:
 	[ -d "mnt/boot" ] && sudo umount mnt/boot && sudo rm -rf mnt/boot || true
 	[ -d "mnt/roms" ] && sudo umount mnt/roms && sudo rm -rf mnt/roms || true
+	[ -d "main" ] && sudo rm -rf main || true
 	source utils.sh && remove_arkbuild && remove_arkbuild32
-	sudo rm -rf Arkbuild Arkbuild32 mnt odroidgoA-4.4.y ArkOS_* wget-*
+	sudo rm -rf Arkbuild Arkbuild32 arkos_* mnt odroidgoA-4.4.y ArkOS_* wget-*
 	@echo "Done!"
 
 clean_complete: clean

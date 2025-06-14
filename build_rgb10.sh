@@ -17,6 +17,8 @@ if [ -f "build.log" ]; then
   done
 fi
 (
+# Set chipset in environment variable
+export CHIPSET=rk3326
 # Load shared utilities (if any)
 source ./utils.sh
 

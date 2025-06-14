@@ -15,11 +15,11 @@ load mmc 1:1 \${loadaddr} Image
 load mmc 1:1 \${initrd_loadaddr} uInitrd
 
 if test \${hwrev} = 'v11'; then
-load mmc 1:1 \${dtb_loadaddr} rk3326-odroidgo2-linux-v11.dtb
+load mmc 1:1 \${dtb_loadaddr} ${CHIPSET}-odroidgo2-linux-v11.dtb
 elif test \${hwrev} = 'v10-go3'; then
-load mmc 1:1 \${dtb_loadaddr} rk3326-odroidgo3-linux.dtb
+load mmc 1:1 \${dtb_loadaddr} ${CHIPSET}-odroidgo3-linux.dtb
 else
-load mmc 1:1 \${dtb_loadaddr} rk3326-odroidgo2-linux.dtb
+load mmc 1:1 \${dtb_loadaddr} ${CHIPSET}-odroidgo2-linux.dtb
 fi
 
 booti \${loadaddr} \${initrd_loadaddr} \${dtb_loadaddr}
@@ -62,9 +62,9 @@ sudo cp scripts/audiostate.service Arkbuild/etc/systemd/system/audiostate.servic
 sudo chroot Arkbuild/ bash -c "systemctl enable audiostate"
 
 # Copy necessary tools for expansion of ROOTFS and convert fat32 games partition to exfat on initial boot
-sudo cp scripts/expandtoexfat.sh.rk3326 ${mountpoint}/expandtoexfat.sh
+sudo cp scripts/expandtoexfat.sh.${CHIPSET} ${mountpoint}/expandtoexfat.sh
 sudo cp scripts/firstboot.sh ${mountpoint}/firstboot.sh
-sudo cp scripts/fstab.exfat.rk3326 ${mountpoint}/fstab.exfat
+sudo cp scripts/fstab.exfat.${CHIPSET} ${mountpoint}/fstab.exfat
 sudo cp scripts/firstboot.service Arkbuild/etc/systemd/system/firstboot.service
 sudo chroot Arkbuild/ bash -c "systemctl enable firstboot"
 
@@ -118,7 +118,7 @@ sudo chroot Arkbuild/ touch /home/ark/.config/.GameLoadingIModePIC
 sudo chroot Arkbuild/ bash -c "chown -R ark:ark /home/ark"
 
 # Set default volume
-sudo cp audio/asound.state.rk3326 Arkbuild/var/local/asound.state
+sudo cp audio/asound.state.${CHIPSET} Arkbuild/var/local/asound.state
 
 # Set SDL Video Driver for bash
 echo "export SDL_VIDEO_EGL_DRIVER=libEGL.so" | sudo tee Arkbuild/etc/profile.d/SDL_VIDEO.sh

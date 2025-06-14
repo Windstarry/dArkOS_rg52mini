@@ -2,21 +2,23 @@
 
 # Build and install PPSSPP standalone emulator
 call_chroot "cd /home/ark &&
-  cd rk3326_core_builds &&
+  cd ${CHIPSET}_core_builds &&
   chmod 777 builds-alt.sh &&
   eatmydata ./builds-alt.sh ppsspp
   "
 sudo mkdir -p Arkbuild/opt/ppsspp
-sudo cp -Ra Arkbuild/home/ark/rk3326_core_builds/ppsspp/build/assets/ Arkbuild/opt/ppsspp/
-sudo cp ppsspp/gamecontrollerdb.txt Arkbuild/opt/ppsspp/assets/
+sudo cp -Ra Arkbuild/home/ark/${CHIPSET}_core_builds/ppsspp/build/assets/ Arkbuild/opt/ppsspp/
+sudo cp ppsspp/gamecontrollerdb.txt.rg353m Arkbuild/opt/ppsspp/assets/gamecontrollerdb.txt
 sudo cp ppsspp/ppsspp.sh Arkbuild/usr/local/bin/
 sudo cp ppsspp/ppsspphotkey.service Arkbuild/etc/systemd/system/
-sudo cp ppsspp/ppssppkeydemon.py.rgb10 Arkbuild/usr/local/bin/ppssppkeydemon.py
-sudo cp -R ppsspp/configs/backupforromsfolder/ Arkbuild/opt/ppsspp/
-sudo cp ppsspp/controls.ini.rgb10 Arkbuild/opt/ppsspp/backupforromsfolder/ppsspp/PSP/SYSTEM/controls.ini
-sudo cp ppsspp/ppsspp.ini.rgb10 Arkbuild/opt/ppsspp/backupforromsfolder/ppsspp/PSP/SYSTEM/ppsspp.ini
-sudo cp -a Arkbuild/home/ark/rk3326_core_builds/ppsspp/LICENSE.TXT Arkbuild/opt/ppsspp/
-sudo cp -a Arkbuild/home/ark/rk3326_core_builds/ppsspp/build/PPSSPPSDL Arkbuild/opt/ppsspp/
+sudo cp ppsspp/ppssppkeydemon.py.rg353m Arkbuild/usr/local/bin/ppssppkeydemon.py
+sudo mkdir -p Arkbuild/opt/ppsspp/backupforromsfolder
+sudo cp -R ppsspp/configs/backupforromsfolder/ppsspp.ini.go.rg353m Arkbuild/opt/ppsspp/backupforromsfolder/ppsspp.ini.go
+sudo cp -R ppsspp/configs/backupforromsfolder/ppsspp.ini.sdl.rg353m Arkbuild/opt/ppsspp/backupforromsfolder/ppsspp.ini.sdl
+sudo cp ppsspp/controls.ini.rg353m Arkbuild/opt/ppsspp/backupforromsfolder/ppsspp/PSP/SYSTEM/controls.ini
+sudo cp ppsspp/ppsspp.ini.rg353m Arkbuild/opt/ppsspp/backupforromsfolder/ppsspp/PSP/SYSTEM/ppsspp.ini
+sudo cp -a Arkbuild/home/ark/${CHIPSET}_core_builds/ppsspp/LICENSE.TXT Arkbuild/opt/ppsspp/
+sudo cp -a Arkbuild/home/ark/${CHIPSET}_core_builds/ppsspp/build/PPSSPPSDL Arkbuild/opt/ppsspp/
 call_chroot "chown -R ark:ark /opt/"
 sudo chmod 777 Arkbuild/opt/ppsspp/PPSSPPSDL
 sudo chmod 777 Arkbuild/usr/local/bin/ppssppkeydemon.py

@@ -2,13 +2,13 @@
 
 # Build and install Mednafen
 call_chroot "cd /home/ark &&
-  cd rk3326_core_builds &&
+  cd ${CHIPSET}_core_builds &&
   chmod 777 builds-alt.sh &&
   ./builds-alt.sh mednafen
   "
 sudo mkdir -p Arkbuild/opt/mednafen
 sudo mkdir -p Arkbuild/home/ark/.mednafen
-sudo cp -a Arkbuild/home/ark/rk3326_core_builds/mednafen64/mednafen Arkbuild/opt/mednafen/
+sudo cp -a Arkbuild/home/ark/${CHIPSET}_core_builds/mednafen64/mednafen Arkbuild/opt/mednafen/
 sudo cp -a mednafen/configs/mednafen.cfg.rgb10 Arkbuild/home/ark/.mednafen/mednafen.cfg
 sudo cp -a mednafen/mednafen Arkbuild/usr/local/bin/
 

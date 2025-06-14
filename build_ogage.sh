@@ -1,8 +1,13 @@
 #!/bin/bash
 
-# Build and install ogage (Globa Hotkey Daemon)
+# Build and install ogage (Global Hotkey Daemon)
+if [ "$CHIPSET" == "rk3326" ]; then
+  branch="master"
+else
+  branch="rg353v"
+fi
 call_chroot "cd /home/ark &&
-  git clone https://github.com/christianhaitian/ogage.git &&
+  git clone https://github.com/christianhaitian/ogage.git -b ${branch} &&
   cd ogage &&
   export CARGO_NET_GIT_FETCH_WITH_CLI=true &&
   cargo build --release &&

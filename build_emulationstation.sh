@@ -30,7 +30,7 @@ call_chroot "cd /home/ark &&
   "
 sudo rm -rf Arkbuild/home/ark/EmulationStation-fcamod
 sudo mkdir -p Arkbuild/etc/emulationstation/themes
-sudo cp Emulationstation/es_systems.cfg.rk3326 Arkbuild/etc/emulationstation/es_systems.cfg
+sudo cp Emulationstation/es_systems.cfg.${CHIPSET} Arkbuild/etc/emulationstation/es_systems.cfg
 sudo cp Emulationstation/es_input.cfg.rgb10 Arkbuild/etc/emulationstation/es_input.cfg
 sudo cp Emulationstation/es_settings.cfg.rgb10 Arkbuild/home/ark/.emulationstation/es_settings.cfg
 sudo cp Emulationstation/emulationstation.sh.rgb10 Arkbuild/usr/bin/emulationstation/emulationstation.sh

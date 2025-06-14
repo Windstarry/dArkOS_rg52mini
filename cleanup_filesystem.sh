@@ -5,7 +5,7 @@ echo -e "Cleaning up filesystem"
 sudo chroot Arkbuild/ bash -c "rm -rf /home/ark/EmulationStation-fcamod"
 sudo chroot Arkbuild/ bash -c "rm -rf /home/ark/libgo2"
 sudo chroot Arkbuild/ bash -c "rm -rf /home/ark/linux-rga"
-sudo chroot Arkbuild/ bash -c "rm -rf /home/ark/rk3326_core_builds"
+sudo chroot Arkbuild/ bash -c "rm -rf /home/ark/${CHIPSET}_core_builds"
 sudo chroot Arkbuild/ bash -c "apt-get remove -y autotools-dev \
   build-essential \
   ccache \

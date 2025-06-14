@@ -28,7 +28,7 @@ sudo mount ${LOOP_BOOT} ${mountpoint}
 KERNEL_VERSION=$(basename $(ls Arkbuild/lib/modules))
 sudo cp $KERNEL_SRC/.config Arkbuild/boot/config-${KERNEL_VERSION}
 sudo cp $KERNEL_SRC/arch/arm64/boot/Image ${mountpoint}/
-sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/rk3326-odroidgo2-linux-v11.dtb ${mountpoint}/
+sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/${CHIPSET}-odroidgo2-linux-v11.dtb ${mountpoint}/
 
 # Create uInitrd from generated initramfs
 sudo cp /usr/bin/qemu-aarch64-static Arkbuild/usr/bin/

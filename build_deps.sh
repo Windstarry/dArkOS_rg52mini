@@ -53,9 +53,13 @@ do
     FOLDER="armhf"
   fi
   sudo mkdir -p Arkbuild/usr/lib/${ARCHITECTURE}/
-  wget -t 3 -T 60 --no-check-certificate https://github.com/christianhaitian/rk3326_core_builds/raw/refs/heads/rk3326/mali/${FOLDER}/libmali-bifrost-g31-rxp0-gbm.so
-  sudo mv libmali-bifrost-g31-rxp0-gbm.so Arkbuild/usr/lib/${ARCHITECTURE}/.
-  whichmali="libmali-bifrost-g31-rxp0-gbm.so"
+  if [ "$CHIPSET" == "rk3326" ]; then
+    whichmali="libmali-bifrost-g31-rxp0-gbm.so"
+  else
+    whichmali="libmali-bifrost-g52-g2p0-gbm.so"
+  fi
+  wget -t 3 -T 60 --no-check-certificate https://github.com/christianhaitian/${CHIPSET}_core_builds/raw/refs/heads/master/mali/${FOLDER}/${whichmali}
+  sudo mv ${whichmali} Arkbuild/usr/lib/${ARCHITECTURE}/.
   cd Arkbuild/usr/lib/${ARCHITECTURE}
   sudo ln -sf ${whichmali} libMali.so
   for LIB in libEGL.so libEGL.so.1 libEGL.so.1.1.0 libGLES_CM.so libGLES_CM.so.1 libGLESv1_CM.so libGLESv1_CM.so.1 libGLESv1_CM.so.1.1.0 libGLESv2.so libGLESv2.so.2 libGLESv2.so.2.0.0 libGLESv2.so.2.1.0 libGLESv3.so libGLESv3.so.3 libgbm.so libgbm.so.1 libgbm.so.1.0.0 libmali.so libmali.so.1 libMaliOpenCL.so libOpenCL.so libwayland-egl.so libwayland-egl.so.1 libwayland-egl.so.1.0.0

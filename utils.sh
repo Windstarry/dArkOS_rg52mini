@@ -53,7 +53,7 @@ function setup_arkbuild32() {
     sudo mount --bind /proc Arkbuild32/proc
     sudo mount --bind /sys Arkbuild32/sys
     echo -e "nameserver 8.8.8.8\nnameserver 1.1.1.1" | sudo tee Arkbuild32/etc/resolv.conf > /dev/null
-    # Install libmali, DRM, and GBM libraries for rk3326
+    # Install libmali, DRM, and GBM libraries for rk3326 or rk3566
     sudo chroot Arkbuild32/ apt-get install -y libdrm-dev libgbm1
     setup_ark_user 32
     sudo mkdir -p Arkbuild32/home/ark
@@ -67,9 +67,13 @@ function setup_arkbuild32() {
     sudo cp -a Arkbuild32/home/ark/libgo2/libgo2.so* Arkbuild/usr/lib/arm-linux-gnueabihf/
     # Place libmali manually (assumes you have libmali.so or mali drivers ready)
     sudo mkdir -p Arkbuild32/usr/lib/arm-linux-gnueabihf/
-    wget -t 3 -T 60 --no-check-certificate https://github.com/christianhaitian/rk3326_core_builds/raw/refs/heads/rk3326/mali/armhf/libmali-bifrost-g31-rxp0-gbm.so
-    sudo mv libmali-bifrost-g31-rxp0-gbm.so Arkbuild32/usr/lib/arm-linux-gnueabihf/.
-    whichmali="libmali-bifrost-g31-rxp0-gbm.so"
+    if [ "$CHIPSET" == "rk3326" ]; then
+      whichmali="libmali-bifrost-g31-rxp0-gbm.so"
+    else
+      whichmali="libmali-bifrost-g52-g2p0-gbm.so"
+    fi
+    wget -t 3 -T 60 --no-check-certificate https://github.com/christianhaitian/${CHIPSET}_core_builds/raw/refs/heads/master/mali/armhf/${whichmali}
+    sudo mv ${whichmali} Arkbuild32/usr/lib/arm-linux-gnueabihf/.
     cd Arkbuild32/usr/lib/arm-linux-gnueabihf
     sudo ln -sf ${whichmali} libMali.so
     for LIB in libEGL.so libEGL.so.1 libEGL.so.1.1.0 libGLES_CM.so libGLES_CM.so.1 libGLESv1_CM.so libGLESv1_CM.so.1 libGLESv1_CM.so.1.1.0 libGLESv2.so libGLESv2.so.2 libGLESv2.so.2.0.0 libGLESv2.so.2.1.0 libGLESv3.so libGLESv3.so.3 libgbm.so libgbm.so.1 libgbm.so.1.0.0 libmali.so libmali.so.1 libMaliOpenCL.so libOpenCL.so libwayland-egl.so libwayland-egl.so.1 libwayland-egl.so.1.0.0

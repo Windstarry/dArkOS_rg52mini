@@ -2,7 +2,7 @@
 
 # Build and install Retroarch
 call_chroot "cd /home/ark &&
-  cd rk3326_core_builds &&
+  cd ${CHIPSET}_core_builds &&
   chmod 777 builds-alt.sh &&
   eatmydata ./builds-alt.sh retroarch
   "
@@ -12,14 +12,21 @@ sudo mkdir -p Arkbuild/home/ark/.config/retroarch/filters/video
 sudo mkdir -p Arkbuild/home/ark/.config/retroarch/filters/audio
 sudo mkdir -p Arkbuild/home/ark/.config/retroarch/autoconfig/udev
 sudo mkdir -p Arkbuild/opt/cmds
-sudo cp -a Arkbuild/home/ark/rk3326_core_builds/retroarch64/retroarch.rk3326.rot Arkbuild/opt/retroarch/bin/retroarch
-sudo cp -a Arkbuild/home/ark/rk3326_core_builds/retroarch/gfx/video_filters/*.so Arkbuild/home/ark/.config/retroarch/filters/video/
-sudo cp -a Arkbuild/home/ark/rk3326_core_builds/retroarch/gfx/video_filters/*.filt Arkbuild/home/ark/.config/retroarch/filters/video/
-sudo cp -a Arkbuild/home/ark/rk3326_core_builds/retroarch/libretro-common/audio/dsp_filters/*.so Arkbuild/home/ark/.config/retroarch/filters/audio/
-sudo cp -a Arkbuild/home/ark/rk3326_core_builds/retroarch/libretro-common/audio/dsp_filters/*.dsp Arkbuild/home/ark/.config/retroarch/filters/audio/
-sudo rm -rf Arkbuild/home/ark/rk3326_core_builds/retroarch/
-sudo cp -a retroarch/configs/retroarch* Arkbuild/home/ark/.config/retroarch/
-sudo cp retroarch/configs/controller/* Arkbuild/home/ark/.config/retroarch/autoconfig/udev/
+if [ "$CHIPSET" == "rk3326" ]; then
+  sudo cp -a Arkbuild/home/ark/${CHIPSET}_core_builds/retroarch64/retroarch.${CHIPSET}.rot Arkbuild/opt/retroarch/bin/retroarch
+else
+  sudo cp -a Arkbuild/home/ark/${CHIPSET}_core_builds/retroarch64/retroarch Arkbuild/opt/retroarch/bin/retroarch
+fi
+sudo cp -a Arkbuild/home/ark/${CHIPSET}_core_builds/retroarch/gfx/video_filters/*.so Arkbuild/home/ark/.config/retroarch/filters/video/
+sudo cp -a Arkbuild/home/ark/${CHIPSET}_core_builds/retroarch/gfx/video_filters/*.filt Arkbuild/home/ark/.config/retroarch/filters/video/
+sudo cp -a Arkbuild/home/ark/${CHIPSET}_core_builds/retroarch/libretro-common/audio/dsp_filters/*.so Arkbuild/home/ark/.config/retroarch/filters/audio/
+sudo cp -a Arkbuild/home/ark/${CHIPSET}_core_builds/retroarch/libretro-common/audio/dsp_filters/*.dsp Arkbuild/home/ark/.config/retroarch/filters/audio/
+sudo rm -rf Arkbuild/home/ark/${CHIPSET}_core_builds/retroarch/
+sudo cp -a retroarch/configs/retroarch.cfg.rg353m Arkbuild/home/ark/.config/retroarch/retroarch.cfg
+sudo cp -a retroarch/configs/retroarch.cfg.bak.rg353m Arkbuild/home/ark/.config/retroarch/retroarch.cfg.bak
+sudo cp -a retroarch/configs/retroarch-core-options.cfg.rg353m Arkbuild/home/ark/.config/retroarch/retroarch-core-options.cfg
+sudo cp -a retroarch/configs/retroarch-core-options.cfg.bak.rg353m Arkbuild/home/ark/.config/retroarch/retroarch-core-options.cfg.bak
+sudo cp -a retroarch/configs/controller/retrogame_joypad.cfg Arkbuild/home/ark/.config/retroarch/autoconfig/udev/
 sudo cp retroarch/scripts/retroarch Arkbuild/usr/local/bin/
 sudo cp retroarch/scripts/retroarch.sh Arkbuild/opt/cmds
 #sudo cp retroarch/scripts/retroarch32.sh Arkbuild/opt/cmds
@@ -28,7 +35,11 @@ sudo chmod 777 Arkbuild/opt/cmds/*
 sudo chmod 777 Arkbuild/usr/local/bin/retroarch
 sudo chmod 777 Arkbuild/opt/retroarch/bin/*
 # Add cores requested from retroarch_cores
-CORE_REPO="master"
+if [ "$CHIPSET" == "rk3326" ]; then
+  CORE_REPO="master"
+else
+  CORE_REPO="rg503"
+fi
 ARCH="aarch64"
 sudo mkdir -p Arkbuild/home/ark/.config/retroarch/cores
 while read RETROARCH_CORE; do
@@ -78,21 +89,28 @@ sudo find Arkbuild/home/ark/.config/retroarch/assets/ -maxdepth 1 ! -name assets
 setup_arkbuild32
 sudo chroot Arkbuild32/ mkdir -p /home/ark
 call_chroot32 "cd /home/ark &&
-  if [ ! -d rk3326_core_builds ]; then git clone https://github.com/christianhaitian/rk3326_core_builds.git; fi &&
-  cd rk3326_core_builds &&
+  if [ ! -d ${CHIPSET}_core_builds ]; then git clone https://github.com/christianhaitian/${CHIPSET}_core_builds.git; fi &&
+  cd ${CHIPSET}_core_builds &&
   chmod 777 builds-alt.sh &&
   ./builds-alt.sh retroarch
   "
 sudo mkdir -p Arkbuild/home/ark/.config/retroarch32/filters/video
 sudo mkdir -p Arkbuild/home/ark/.config/retroarch32/filters/audio
 sudo mkdir -p Arkbuild/home/ark/.config/retroarch32/autoconfig/udev
-sudo cp -a Arkbuild32/home/ark/rk3326_core_builds/retroarch32/retroarch32.rk3326.rot Arkbuild/opt/retroarch/bin/retroarch32
-sudo cp -a Arkbuild32/home/ark/rk3326_core_builds/retroarch/gfx/video_filters/*.so Arkbuild/home/ark/.config/retroarch32/filters/video/
-sudo cp -a Arkbuild32/home/ark/rk3326_core_builds/retroarch/gfx/video_filters/*.filt Arkbuild/home/ark/.config/retroarch32/filters/video/
-sudo cp -a Arkbuild32/home/ark/rk3326_core_builds/retroarch/libretro-common/audio/dsp_filters/*.so Arkbuild/home/ark/.config/retroarch32/filters/audio/
-sudo cp -a Arkbuild32/home/ark/rk3326_core_builds/retroarch/libretro-common/audio/dsp_filters/*.dsp Arkbuild/home/ark/.config/retroarch32/filters/audio/
-sudo cp -a retroarch32/configs/retroarch* Arkbuild/home/ark/.config/retroarch32/
-sudo cp retroarch32/configs/controller/* Arkbuild/home/ark/.config/retroarch32/autoconfig/udev/
+if [ "$CHIPSET" == "rk3326" ]; then
+  sudo cp -a Arkbuild32/home/ark/${CHIPSET}_core_builds/retroarch32/retroarch32.${CHIPSET}.rot Arkbuild/opt/retroarch/bin/retroarch32
+else
+  sudo cp -a Arkbuild32/home/ark/${CHIPSET}_core_builds/retroarch32/retroarch32 Arkbuild/opt/retroarch/bin/retroarch32
+fi
+sudo cp -a Arkbuild32/home/ark/${CHIPSET}_core_builds/retroarch/gfx/video_filters/*.so Arkbuild/home/ark/.config/retroarch32/filters/video/
+sudo cp -a Arkbuild32/home/ark/${CHIPSET}_core_builds/retroarch/gfx/video_filters/*.filt Arkbuild/home/ark/.config/retroarch32/filters/video/
+sudo cp -a Arkbuild32/home/ark/${CHIPSET}_core_builds/retroarch/libretro-common/audio/dsp_filters/*.so Arkbuild/home/ark/.config/retroarch32/filters/audio/
+sudo cp -a Arkbuild32/home/ark/${CHIPSET}_core_builds/retroarch/libretro-common/audio/dsp_filters/*.dsp Arkbuild/home/ark/.config/retroarch32/filters/audio/
+sudo cp -a retroarch32/configs/retroarch.cfg.rg353m Arkbuild/home/ark/.config/retroarch/retroarch.cfg
+sudo cp -a retroarch32/configs/retroarch.cfg.bak.rg353m Arkbuild/home/ark/.config/retroarch32/retroarch.cfg.bak
+sudo cp -a retroarch32/configs/retroarch-core-options.cfg.rg353m Arkbuild/home/ark/.config/retroarch32/retroarch-core-options.cfg
+sudo cp -a retroarch32/configs/retroarch-core-options.cfg.bak.rg353m Arkbuild/home/ark/.config/retroarch32/retroarch-core-options.cfg.bak
+sudo cp -a retroarch32/configs/controller/retrogame_joypad.cfg Arkbuild/home/ark/.config/retroarch32/autoconfig/udev/
 sudo cp retroarch32/scripts/retroarch32 Arkbuild/usr/local/bin/
 sudo cp retroarch32/scripts/retroarch32.sh Arkbuild/opt/cmds
 call_chroot "chown -R ark:ark /opt/"
@@ -100,7 +118,11 @@ sudo chmod 777 Arkbuild/opt/cmds/*
 sudo chmod 777 Arkbuild/usr/local/bin/retroarch32
 sudo chmod 777 Arkbuild/opt/retroarch/bin/*
 # Add cores requested from retroarch_cores32
-CORE_REPO="master"
+if [ "$CHIPSET" == "rk3326" ]; then
+  CORE_REPO="master"
+else
+  CORE_REPO="rg503"
+fi
 ARCH="arm7hf"
 sudo mkdir -p Arkbuild/home/ark/.config/retroarch32/cores
 while read RETROARCH_CORE32; do
