@@ -20,8 +20,12 @@ fi
 # Set chipset in environment variable
 export CHIPSET=rk3326
 export UNIT=rgb10
+
 # Load shared utilities (if any)
 source ./utils.sh
+
+# Let's make sure necessary tools are available
+source ./prepare.sh
 
 # Step-by-step build process
 source ./setup_partition.sh

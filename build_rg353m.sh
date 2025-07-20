@@ -21,8 +21,12 @@ fi
 export CHIPSET=rk3566
 export UNIT=353m
 export UNIT_DTB=${CHIPSET}-${UNIT}
+
 # Load shared utilities (if any)
 source ./utils.sh
+
+# Let's make sure necessary tools are available
+source ./prepare.sh
 
 # Step-by-step build process
 source ./setup_partition-rk3566.sh

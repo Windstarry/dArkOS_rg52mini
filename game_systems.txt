@@ -42,6 +42,7 @@ nes
 openbor
 pico
 pico-8/carts
+piece
 pokemonmini
 psp
 pspminis

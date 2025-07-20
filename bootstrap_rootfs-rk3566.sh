@@ -1,33 +1,6 @@
 #!/bin/bash
 
 echo -e "Boostraping Debian....\n\n"
-# Ensure some build tools are installed and ready
-sudo apt -y update
-for NEEDED_TOOL in bc btrfs-progs build-essential bison flex ccache debootstrap eatmydata gcc lib32stdc++6 libc6-i386 libncurses5-dev libssl-dev lz4 lzop python-is-python3 qemu-user-static zlib1g:i386 xfsprogs
-do
-  dpkg -s "$NEEDED_TOOL" &>/dev/null
-  if [[ $? != "0" ]]; then
-    sudo apt -y install ${NEEDED_TOOL}
-    verify_action
-  fi
-done
-
-#Ensure debootstrap is installed
-dpkg -s "debootstrap" &>/dev/null
-if [[ $? != "0" ]]; then
-  sudo apt -y update
-  sudo apt -y install debootstrap
-fi
-
-# Create ccache if it does not exist already
-if [ ! -d "Arkbuild_ccache" ]; then
-  mkdir Arkbuild_ccache
-fi
-export CCACHE_DIR=${PWD}/Arkbuild_ccache
-sudo /usr/sbin/update-ccache-symlinks
-[ -z $(echo $PATH | grep ccache) ] && export PATH=/usr/lib/ccache:$PATH
-
-
 # Bootstrap base system
 sudo eatmydata debootstrap --no-check-gpg --include=eatmydata --resolve-deps --arch=arm64 --foreign ${DEBIAN_CODE_NAME} Arkbuild http://deb.debian.org/debian/
 sudo cp /usr/bin/qemu-aarch64-static Arkbuild/usr/bin/
