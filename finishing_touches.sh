@@ -74,6 +74,9 @@ sudo cp hotkeydaemon/killer_daemon.service Arkbuild/etc/systemd/system/killer_da
 sudo cp hotkeydaemon/killer_daemon.py Arkbuild/usr/local/bin/killer_daemon.py
 sudo chmod 777 Arkbuild/usr/local/bin/killer_daemon.py
 
+# Add amiga script
+sudo cp amiga/amiga.sh Arkbuild/usr/local/bin/
+
 #Generate fstab to be used after EASYROMS expansion
 cat <<EOF | sudo tee ${mountpoint}/fstab.exfat
 LABEL=ROOTFS / ${ROOT_FILESYSTEM_FORMAT} ${ROOT_FILESYSTEM_MOUNT_OPTIONS} 0 0
