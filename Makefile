@@ -1,6 +1,11 @@
 SHELL := /bin/bash
 
-export DEBIAN_CODE_NAME := bookworm
+DEBIAN_CODE_NAME ?= bookworm
+export DEBIAN_CODE_NAME
+
+ifeq ($(DEBIAN_CODE_NAME),)
+  $(error DEBIAN_CODE_NAME is not set. Please run with DEBIAN_CODE_NAME=suite (e.g., bookworm))
+endif
 
 all:
 	@echo "Please specify a valid build target: make rgb10 or make rg353m"

@@ -28,11 +28,15 @@ while read NEEDED_DEV_PACKAGE; do
   fi
 done <needed_dev_packages.txt
 
-# Default gcc and g++ to version 12
-#sudo chroot ${CHROOT_DIR}/ bash -c "update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 10"
-#sudo chroot ${CHROOT_DIR}/ bash -c "update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 20"
-#sudo chroot ${CHROOT_DIR}/ bash -c "update-alternatives --set gcc \"/usr/bin/gcc-12\""
-#sudo chroot ${CHROOT_DIR}/ bash -c "update-alternatives --set g++ \"/usr/bin/g++-12\""
+# Default gcc and g++ to version 12 if gcc is newer than 12
+GCC_VERSION=`sudo chroot ${CHROOT_DIR}/ echo $(gcc --version | head -n 1 | awk '{print $3}' | cut -d'.' -f1)`
+if (( GCC_VERSION > 12 )); then
+  install_package $BIT gcc-12
+  sudo chroot ${CHROOT_DIR}/ bash -c "update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 10"
+  sudo chroot ${CHROOT_DIR}/ bash -c "update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 20"
+  sudo chroot ${CHROOT_DIR}/ bash -c "update-alternatives --set gcc \"/usr/bin/gcc-12\""
+  sudo chroot ${CHROOT_DIR}/ bash -c "update-alternatives --set g++ \"/usr/bin/g++-12\""
+fi
 
 # Bind ccache to chroot to speed up consecutive builds
 [ ! -d "${CHROOT_DIR}/home/ark/Arkbuild_ccache" ] && sudo mkdir -p ${CHROOT_DIR}/home/ark/Arkbuild_ccache
