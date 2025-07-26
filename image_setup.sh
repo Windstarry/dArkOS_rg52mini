@@ -3,7 +3,8 @@
 echo -e "Setup the Image file...\n\n"
 
 # Image creation
-DISK="ArkOS_RGB10.img"
+iName=`echo ${UNIT} | tr '[:lower:]' '[:upper:]'`
+DISK="dArkOS_${iName}.img"
 dd if=/dev/zero of="${DISK}" bs=1M count=0 seek="${DISK_SIZE}" conv=fsync
 parted -s "${DISK}" mklabel msdos
 parted -s "${DISK}" -a min unit s mkpart primary fat32 ${SYSTEM_PART_START} ${SYSTEM_PART_END}

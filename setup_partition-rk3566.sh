@@ -13,7 +13,11 @@ elif [[ "$ROOT_FILESYSTEM_FORMAT" == *"ext"* ]]; then
   ROOT_FILESYSTEM_FORMAT_PARAMETERS="-F -L ROOTFS"
   ROOT_FILESYSTEM_MOUNT_OPTIONS="defaults,noatime"
 fi
-DISK="ArkOS_${UNIT}.img"
+if [[ "$UNIT" == *"353"* ]] || [[ "$UNIT" == *"503"* ]]; then
+  DISK="dArkOS_RG${UNIT}.img"
+else
+  DISK="dArkOS_${UNIT}.img"
+fi
 IMAGE_SIZE=7.5G
 SECTOR_SIZE=512
 BUILD_SIZE=54579     # Initial file system size in MB during the build.  Then will be reduced to the DISK_SIZE or below upon completion

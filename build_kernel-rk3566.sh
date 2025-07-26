@@ -98,4 +98,13 @@ sudo dd if=trust.img of=$LOOP_DEV bs=$SECTOR_SIZE seek=8192 conv=notrunc
 sudo dd if=uboot.img of=$LOOP_DEV bs=$SECTOR_SIZE seek=16384 conv=notrunc
 sudo dd if=rk3566_tool/Image/resource.img of=$LOOP_DEV bs=$SECTOR_SIZE seek=24576 conv=notrunc
 
+# Last but not least, create undervolt dtbo files and place them in an overlays subfolder in the fat partition
+sudo mkdir -p ../../${mountpoint}/overlays
+for DTS in light medium maximum
+do
+  wget -t 3 -T 60 --no-check-certificate https://raw.githubusercontent.com/christianhaitian/rk3566_core_builds/refs/heads/master/shell-scripts/undervolt/undervolt.${DTS}.dts
+  dtc -@ -I dts -O dtb -o undervolt.${DTS}.dtbo undervolt.${DTS}.dts
+  sudo mv undervolt.${DTS}.dtbo ../../${mountpoint}/overlays/
+done
+
 cd ../..
