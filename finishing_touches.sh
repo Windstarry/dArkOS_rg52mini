@@ -36,7 +36,12 @@ echo "export PATH=\"\$PATH:/usr/sbin\"" | sudo tee -a Arkbuild/home/ark/.bashrc
 sudo chroot Arkbuild/ bash -c "chown ark:ark /home/ark/.bashrc"
 
 # Set the name in the hostname and add it to the hosts file
-echo "rgb10" | sudo tee Arkbuild/etc/hostname
+if [[ "$UNIT" == *"353"* ]] || [[ "$UNIT" == *"503"* ]]; then
+  NAME="rg${UNIT}"
+else
+  NAME="${UNIT}"
+fi
+echo "$NAME" | sudo tee Arkbuild/etc/hostname
 echo -e "# This host address\n127.0.1.1\t${NAME}" | sudo tee -a Arkbuild/etc/hosts
 #sudo sed -i '0,/localhost/s//localhost rgb10/' Arkbuild/etc/hosts
 

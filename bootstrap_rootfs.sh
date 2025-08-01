@@ -57,8 +57,7 @@ echo -e "# Rules
 KERNEL==\"mali0\", GROUP=\"video\", MODE=\"0660\"
 KERNEL==\"rga\", GROUP=\"video\", MODE=\"0660\"
 ACTION==\"add\", SUBSYSTEM==\"backlight\", RUN+=\"/bin/chgrp video /sys/class/backlight/%k/brightness\"
-ACTION==\"add\", SUBSYSTEM==\"backlight\", RUN+=\"/bin/chmod g+w /sys/class/backlight/%k/brightness\"
-ACTION==\"add|change\", KERNEL==\"sd[a-z]*|mmcblk[0-9]*\", ATTR{queue/rotational}==\"0\", ATTR{queue/scheduler}=\"bfq\"" | sudo tee Arkbuild/etc/udev/rules.d/10-standard.rules
+ACTION==\"add\", SUBSYSTEM==\"backlight\", RUN+=\"/bin/chmod g+w /sys/class/backlight/%k/brightness\"" | sudo tee Arkbuild/etc/udev/rules.d/10-standard.rules
 echo -e "Generating 40-usb_modeswitch.rules for udev"
 echo -e "# Rules
 ACTION!=\"add|change\", GOTO=\"end_modeswitch\"

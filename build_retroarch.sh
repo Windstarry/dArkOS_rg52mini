@@ -26,7 +26,7 @@ sudo cp -a retroarch/configs/retroarch.cfg.${UNIT} Arkbuild/home/ark/.config/ret
 sudo cp -a retroarch/configs/retroarch.cfg.bak.${UNIT} Arkbuild/home/ark/.config/retroarch/retroarch.cfg.bak
 sudo cp -a retroarch/configs/retroarch-core-options.cfg.${UNIT} Arkbuild/home/ark/.config/retroarch/retroarch-core-options.cfg
 sudo cp -a retroarch/configs/retroarch-core-options.cfg.bak.${UNIT} Arkbuild/home/ark/.config/retroarch/retroarch-core-options.cfg.bak
-sudo cp -a retroarch/configs/controller/retrogame_joypad.cfg Arkbuild/home/ark/.config/retroarch/autoconfig/udev/
+sudo cp -a retroarch/configs/controller/*.cfg Arkbuild/home/ark/.config/retroarch/autoconfig/udev/
 sudo cp retroarch/scripts/retroarch Arkbuild/usr/local/bin/
 sudo cp retroarch/scripts/retroarch.sh Arkbuild/opt/cmds
 #sudo cp retroarch/scripts/retroarch32.sh Arkbuild/opt/cmds
@@ -103,7 +103,7 @@ sudo cp -a retroarch32/configs/retroarch.cfg.${UNIT} Arkbuild/home/ark/.config/r
 sudo cp -a retroarch32/configs/retroarch.cfg.bak.${UNIT} Arkbuild/home/ark/.config/retroarch32/retroarch.cfg.bak
 sudo cp -a retroarch32/configs/retroarch-core-options.cfg.${UNIT} Arkbuild/home/ark/.config/retroarch32/retroarch-core-options.cfg
 sudo cp -a retroarch32/configs/retroarch-core-options.cfg.bak.${UNIT} Arkbuild/home/ark/.config/retroarch32/retroarch-core-options.cfg.bak
-sudo cp -a retroarch32/configs/controller/retrogame_joypad.cfg Arkbuild/home/ark/.config/retroarch32/autoconfig/udev/
+sudo cp -a retroarch32/configs/controller/*.cfg Arkbuild/home/ark/.config/retroarch32/autoconfig/udev/
 sudo cp retroarch32/scripts/retroarch32 Arkbuild/usr/local/bin/
 sudo cp retroarch32/scripts/retroarch32.sh Arkbuild/opt/cmds
 call_chroot "chown -R ark:ark /opt/"

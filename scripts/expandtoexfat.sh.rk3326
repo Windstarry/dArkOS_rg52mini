@@ -63,14 +63,14 @@ sleep 2
 sudo tar -xvf /roms.tar -C /
 #sudo tar -xvf /roms.tar --strip-components=1 -C /
 sync
-#sudo rm -rf -v /roms/themes/es-theme-nes-box/
+sudo rm -rf -v /roms/themes/es-theme-nes-box/
 # Setup swapfile
 #printf "\n\n\e[32mSetting up swapfile.  Please wait...\n"
 #printf "\033[0m"
 #sudo dd if=/dev/zero of=/swapfile bs=1024 count=262144
 #sudo mkswap /swapfile
 #sudo swapon /swapfile
-#sudo mv -f -v /tempthemes/* /roms/themes
+sudo mv -f -v /tempthemes/* /roms/themes
 sync
 sleep 1
 sudo rm -rf -v /tempthemes
