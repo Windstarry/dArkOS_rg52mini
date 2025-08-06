@@ -17,13 +17,17 @@ sync
 
 
 # Build uboot and install it to the image
-git clone --depth=1 https://github.com/christianhaitian/u-boot-${CHIPSET}
+if [ "$UNIT" == "rg351mp" ]; then
+  git clone --depth=1 https://github.com/christianhaitian/RG351MP-u-boot u-boot-${CHIPSET}
+else
+  git clone --depth=1 https://github.com/christianhaitian/u-boot-${CHIPSET}
+fi
 cd u-boot-${CHIPSET}
 ./make.sh odroidgoa
 
 dd if="sd_fuse/idbloader.img" of="../${DISK}" bs=512 seek=64 conv=sync,noerror,notrunc
 dd if="sd_fuse/uboot.img" of="../${DISK}" bs=512 seek=16384 conv=sync,noerror,notrunc
 dd if="sd_fuse/trust.img" of="../${DISK}" bs=512 seek=24576 conv=sync,noerror,notrunc
-
+cp arch/arm64/boot/dts/rockchip/${UNIT}-kernel.dtb /tmp/
 cd ..
 rm -rf u-boot-${CHIPSET}

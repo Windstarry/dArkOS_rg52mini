@@ -4,6 +4,7 @@
 if [ "$UNIT" == "rgb10" ] || [ "$UNIT" == "rk2020" ]; then
   KERNEL_SRC="odroidgoA-4.4.y"
   DEF_CONFIG="odroidgoa_tweaked_defconfig"
+  SCREEN_ROTATION="3"
   if [ "$UNIT" == "rgb10" ]; then
     KERNEL_DTB="${CHIPSET}-odroidgo2-linux-v11.dtb"
   else
@@ -12,6 +13,7 @@ if [ "$UNIT" == "rgb10" ] || [ "$UNIT" == "rk2020" ]; then
 else
   KERNEL_SRC="rg351"
   DEF_CONFIG="rg351p_tweaked_defconfig"
+  SCREEN_ROTATION="0"
   KERNEL_DTB="${CHIPSET}-${UNIT}-linux.dtb"
 fi
 if [ ! -d "$KERNEL_SRC" ]; then
@@ -41,6 +43,10 @@ KERNEL_VERSION=$(basename $(ls Arkbuild/lib/modules))
 sudo cp $KERNEL_SRC/.config Arkbuild/boot/config-${KERNEL_VERSION}
 sudo cp $KERNEL_SRC/arch/arm64/boot/Image ${mountpoint}/
 sudo cp $KERNEL_SRC/arch/arm64/boot/dts/rockchip/${KERNEL_DTB} ${mountpoint}/
+if [ "$UNIT" == "rg351mp" ]; then
+  sudo cp /tmp/${UNIT}-kernel.dtb ${mountpoint}/
+  sudo rm /tmp/${UNIT}-kernel.dtb
+fi
 
 # Create uInitrd from generated initramfs
 sudo cp /usr/bin/qemu-aarch64-static Arkbuild/usr/bin/

@@ -1,12 +1,24 @@
 #!/bin/bash
 
 # Build and install ogage (Global Hotkey Daemon)
-if [ "$CHIPSET" == "rk3326" ]; then
+if [ "$UNIT" == "chi" ]; then
+  branch="gameforce-chi"
+elif [ "$UNIT" == "g350" ]; then
+  branch="g350"
+elif [ "$UNIT" == "rgb10" ]; then
   branch="master"
+elif [ "$UNIT" == "rk2020" ]; then
+  branch="rk2020"
+elif [ "$UNIT" == "rg351mp" ]; then
+  branch="rg351mp"
+elif [ "$UNIT" == "rg351v" ]; then
+  branch="rg351v"
 elif [[ "$UNIT" == *"353"* ]]; then
   branch="rg353v"
 elif [[ "$UNIT" == "503" ]]; then
   branch="rg503"
+elif [ "$UNIT" == "rk2023" ]; then
+  branch="rk2023"
 fi
 call_chroot "cd /home/ark &&
   git clone https://github.com/christianhaitian/ogage.git -b ${branch} &&

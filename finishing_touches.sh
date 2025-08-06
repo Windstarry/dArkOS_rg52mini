@@ -4,7 +4,7 @@
 cat <<EOF | sudo tee ${mountpoint}/boot.ini
 odroidgoa-uboot-config
 
-setenv bootargs "root=/dev/mmcblk0p2 rootwait rw fsck.repair=yes net.ifnames=0 fbcon=rotate:3 console=/dev/ttyFIQ0 quiet splash consoleblank=0 vt.global_cursor_default=0"
+setenv bootargs "root=/dev/mmcblk0p2 rootwait rw fsck.repair=yes net.ifnames=0 fbcon=rotate:${SCREEN_ROTATION} console=/dev/ttyFIQ0 quiet splash consoleblank=0 vt.global_cursor_default=0"
 
 # Booting
 setenv loadaddr "0x02000000"
@@ -14,18 +14,17 @@ setenv dtb_loadaddr "0x01f00000"
 load mmc 1:1 \${loadaddr} Image
 load mmc 1:1 \${initrd_loadaddr} uInitrd
 
-if test \${hwrev} = 'v11'; then
-load mmc 1:1 \${dtb_loadaddr} ${CHIPSET}-odroidgo2-linux-v11.dtb
-elif test \${hwrev} = 'v10-go3'; then
-load mmc 1:1 \${dtb_loadaddr} ${CHIPSET}-odroidgo3-linux.dtb
-else
-load mmc 1:1 \${dtb_loadaddr} ${CHIPSET}-odroidgo2-linux.dtb
-fi
+load mmc 1:1 \${dtb_loadaddr} ${KERNEL_DTB}
 
 booti \${loadaddr} \${initrd_loadaddr} \${dtb_loadaddr}
 EOF
 
-sudo cp logos/oga/logo.bmp ${mountpoint}/
+if [ "$UNIT" == "rgb10" ] || [ "$UNIT" == "rk2020" ]; then
+  sudo cp logos/rotated/logo.bmp ${mountpoint}/
+else
+  sudo cp logos/unrotated/logo.bmp ${mountpoint}/
+fi
+
 sudo cp optional/* ${mountpoint}/
 
 # Tell systemd to ignore PowerKey presses.  Let the Global Hotkey daemon handle that
@@ -147,7 +146,9 @@ sudo cp scripts/speak_bat_life.sh Arkbuild/usr/local/bin/
 sudo cp scripts/spktoggle.sh Arkbuild/usr/local/bin/
 sudo cp scripts/timezones Arkbuild/usr/local/bin/
 sudo cp global/* Arkbuild/usr/local/bin/
-sudo cp device/rgb10/* Arkbuild/usr/local/bin/
+if [[ "$UNIT" == "rgb10" ]]
+  sudo cp device/rgb10/* Arkbuild/usr/local/bin/
+fi
 
 # Make all scripts in /usr/local/bin executable, world style
 sudo chmod 777 Arkbuild/usr/local/bin/*
