@@ -21,8 +21,13 @@ if [[ "${ENABLE_CACHE}" == "y" ]]; then
       sudo DEBIAN_FRONTEND=noninteractive apt-get install -y apt-cacher-ng
       verify_action
       sudo rm -f apt-cacher-ng.preseed
-	  sudo sed -i "/\# AllowUserPorts:/c\AllowUserPorts: 0" /etc/apt-cacher-ng/acng.conf
-	  sudo sed -i "/\# DlMaxRetries: /c\DlMaxRetries: 50000" /etc/apt-cacher-ng/acng.conf
+      # Allow any ports or apt downloads will most likely fail
+      sudo sed -i "/\# AllowUserPorts:/c\AllowUserPorts: 0" /etc/apt-cacher-ng/acng.conf
+      # Increase the number of package download retries as the mirrors can be busy
+      sudo sed -i "/\# DlMaxRetries: /c\DlMaxRetries: 50000" /etc/apt-cacher-ng/acng.conf
+      # If a package changes from what's in the cache, just redownload the whole package again
+      # Do not error out with a 503 error [Server reports unexpected range] message
+      sudo sed -i "/\# VfileUseRangeOps: /c\VfileUseRangeOps: 0" /etc/apt-cacher-ng/acng.conf
   fi
   # Ensure service is running
   sudo systemctl enable --now apt-cacher-ng

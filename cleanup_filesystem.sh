@@ -28,7 +28,7 @@ call_chroot "apt remove -y autotools-dev \
   libfaad-dev \
   libflac-dev \
   libfreeimage-dev \
-  libfreetype6-dev \
+  libfreetype-dev \
   libfribidi-dev \
   libglew-dev \
   libjpeg62-turbo-dev \

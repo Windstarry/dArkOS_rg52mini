@@ -13,7 +13,7 @@ libdrm-dev
 libeigen3-dev
 libevdev-dev
 libfreeimage-dev
-libfreetype6-dev
+libfreetype-dev
 libluajit-5.1-dev
 libncurses-dev
 libnl-3-dev
