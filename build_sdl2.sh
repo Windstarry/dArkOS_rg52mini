@@ -19,6 +19,7 @@ fi
 # Build and install SDL2
 if [ "$ARCH" == "arm-linux-gnueabihf" ]; then
   sudo chroot ${CHROOT_DIR}/ bash -c "source /root/.bashrc && cd /home/ark &&
+    export CFLAGS=\"-Wno-error=int-conversion\" &&
     if [ ! -d ${CHIPSET}_core_builds ]; then git clone https://github.com/christianhaitian/${CHIPSET}_core_builds.git; fi &&
     cd ${CHIPSET}_core_builds &&
     chmod 777 builds-alt.sh &&

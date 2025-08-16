@@ -37,7 +37,7 @@ echo -e "# This host address\n127.0.1.1\t${NAME}" | sudo tee -a Arkbuild/etc/hos
 sudo cp audio/.asoundrc.${CHIPSET} Arkbuild/home/ark/.asoundrc
 sudo cp audio/.asoundrcbak.${CHIPSET} Arkbuild/home/ark/.asoundrcbak
 sudo cp audio/.asoundrcbt.${CHIPSET} Arkbuild/home/ark/.asoundrcbt
-sudo chown ark:ark Arkbuild/home/ark/.asoundrc*
+sudo chroot Arkbuild/ bash -c "chown ark:ark /home/ark/.asoundrc*"
 
 # Sleep script and set default SuspendState to freeze
 sudo mkdir -p Arkbuild/usr/lib/systemd/system-sleep

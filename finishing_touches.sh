@@ -54,7 +54,9 @@ echo -e "# This host address\n127.0.1.1\t${NAME}" | sudo tee -a Arkbuild/etc/hos
 #sudo sed -i '0,/localhost/s//localhost rgb10/' Arkbuild/etc/hosts
 
 # Copy the necessary .asoundrc file for proper audio in emulationstation and emulators
-sudo cp audio/.asoundrc* Arkbuild/home/ark/
+sudo cp audio/.asoundrc Arkbuild/home/ark/.asoundrc
+sudo cp audio/.asoundrcbak Arkbuild/home/ark/.asoundrcbak
+sudo cp audio/.asoundrcbt Arkbuild/home/ark/.asoundrcbt
 sudo chroot Arkbuild/ bash -c "chown ark:ark /home/ark/.asoundrc*"
 
 # Sleep script
@@ -69,10 +71,10 @@ sudo chroot Arkbuild/ bash -c "(crontab -l 2>/dev/null; echo \"@reboot /usr/loca
 sudo mkdir -p Arkbuild/usr/local/bin
 sudo cp scripts/spktoggle.sh Arkbuild/usr/local/bin/
 sudo chmod 777 Arkbuild/usr/local/bin/spktoggle.sh
-#sudo chroot Arkbuild/ bash -c "(crontab -l 2>/dev/null; echo \"@reboot /usr/local/bin/spktoggle.sh &\") | crontab -"
-#sudo cp scripts/audiopath.service Arkbuild/etc/systemd/system/audiopath.service
+sudo chroot Arkbuild/ bash -c "(crontab -l 2>/dev/null; echo \"@reboot /usr/local/bin/spktoggle.sh &\") | crontab -"
+sudo cp scripts/audiopath.service Arkbuild/etc/systemd/system/audiopath.service
 sudo cp scripts/audiostate.service Arkbuild/etc/systemd/system/audiostate.service
-#sudo chroot Arkbuild/ bash -c "systemctl enable audiopath"
+sudo chroot Arkbuild/ bash -c "systemctl enable audiopath"
 sudo chroot Arkbuild/ bash -c "systemctl enable audiostate"
 
 # Copy necessary tools for expansion of ROOTFS and convert fat32 games partition to exfat on initial boot
