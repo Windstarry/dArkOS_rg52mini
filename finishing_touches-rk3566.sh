@@ -91,7 +91,7 @@ cat <<EOF | sudo tee ${mountpoint}/fstab.exfat
 /dev/mmcblk1p4  /  ${ROOT_FILESYSTEM_FORMAT} ${ROOT_FILESYSTEM_MOUNT_OPTIONS} 0 0
 
 /dev/mmcblk1p3 /boot vfat defaults,noatime 0 0
-/dev/mmcblk1p5 /roms exfat defaults,auto,umask=000,uid=1002,gid=1002,noatime 0 0
+/dev/mmcblk1p5 /roms exfat defaults,auto,umask=000,uid=1000,gid=1000,noatime 0 0
 /roms/tools /opt/system/Tools none nofail,x-systemd.device-timeout=7,bind
 EOF
 
@@ -128,6 +128,7 @@ sudo mkdir -p Arkbuild/opt/system/Advanced
 sudo cp dArkOS_Tools/*.sh Arkbuild/opt/system/
 sudo cp dArkOS_Tools/${CHIPSET}/*.sh Arkbuild/opt/system/Advanced/
 sudo cp dArkOS_Tools/Advanced/*.sh Arkbuild/opt/system/Advanced/
+sudo cp scripts/"Switch to SD2 for Roms.sh" Arkbuild/opt/system/Advanced/
 sudo chroot Arkbuild/ bash -c "chown -R ark:ark /opt"
 sudo chmod -R 777 Arkbuild/opt/system/
 
@@ -167,6 +168,11 @@ sudo cp scripts/${CHIPSET}/* Arkbuild/usr/local/bin/
 sudo cp scripts/timezones Arkbuild/usr/local/bin/
 sudo cp global/* Arkbuild/usr/local/bin/
 sudo cp device/${CHIPSET}/uboot.img.anbernic Arkbuild/usr/local/bin/
+sudo cp scripts/Switch* Arkbuild/usr/local/bin/
+# Disable winbin as connectivity to Active Directory is not needed
+sudo chroot Arkbuild/ bash -c "systemctl disable winbind"
+# Set the default graphical target to multi-user instead of graphical"
+sudo chroot Arkbuild/ bash -c "systemctl set-default multi-user.target"
 
 # Make all scripts in /usr/local/bin executable, world style
 sudo chmod 777 Arkbuild/usr/local/bin/*
@@ -193,6 +199,17 @@ echo "$NAME" | sudo tee Arkbuild/home/ark/.config/.DEVICE
 
 # Configure default samba share setup
 cat <<EOF | sudo tee -a Arkbuild/etc/samba/smb.conf
+[roms2]
+   comment = ROMS2
+   path = /roms2
+   browsable = yes
+   read only = no
+   map archive = no
+   map system = no
+   map hidden = no
+   guest ok = yes
+   read list = guest
+
 [roms]
    comment = ROMS
    path = /roms
@@ -286,6 +303,43 @@ while read GAME_SYSTEM; do
     sudo mkdir -p ${fat32_mountpoint}/${GAME_SYSTEM}
   fi
 done <game_systems.txt
+
+# Add latest version of PortMaster install to roms/tools folder
+for (( ; ; ))
+do
+ PMver=$(curl --silent -qI https://github.com/PortsMaster/PortMaster-GUI/releases/latest | awk -F '/' '/^location/ {print  substr($NF, 1, length($NF)-1)}')
+ wget -t 3 -T 60 --no-check-certificate https://github.com/PortsMaster/PortMaster-GUI/releases/download/${PMver}/Install.PortMaster.sh
+ if [ $? == 0 ]; then
+  break
+ fi
+ sleep 10
+done
+sudo mv -f Install.PortMaster.sh ${fat32_mountpoint}/tools/Install.PortMaster.sh
+chmod 777 ${fat32_mountpoint}/tools/Install.PortMaster.sh
+
+# Add latest version of ThemeMaster to roms/tools folder
+for (( ; ; ))
+do
+ wget -t 3 -T 60 --no-check-certificate https://github.com/JohnIrvine1433/ThemeMaster/archive/refs/heads/master.zip
+ if [ $? == 0 ]; then
+  break
+ fi
+ sleep 10
+done
+sudo unzip -X -o master.zip -d ${fat32_mountpoint}/tools/
+sudo rm -rf ${fat32_mountpoint}/tools/ThemeMaster
+sudo mv -f ${fat32_mountpoint}/tools/ThemeMaster-master/ThemeMaster ${fat32_mountpoint}/tools/
+sudo mv -f ${fat32_mountpoint}/tools/ThemeMaster-master/ThemeMaster.sh ${fat32_mountpoint}/tools/
+sudo rm -rf ${fat32_mountpoint}/tools/ThemeMaster-master/
+rm -f master.zip
+
+# Get some sample pico-8 games
+sudo rm -rf /roms/pico-8/carts/*
+sudo wget -t 3 -T 60 --no-check-certificate https://www.lexaloffle.com/bbs/cposts/1/15133.p8.png -O ${fat32_mountpoint}/pico-8/carts/celeste.p8.png
+sudo wget -t 3 -T 60 --no-check-certificate https://www.lexaloffle.com/bbs/cposts/sc/scrap_boy-6.p8.png -O ${fat32_mountpoint}/pico-8/carts/scrap_boy-6.p8.png
+sudo wget -t 3 -T 60 --no-check-certificate https://www.lexaloffle.com/bbs/cposts/di/dinkykong-0.p8.png -O ${fat32_mountpoint}/pico-8/carts/dinkykong-0.p8.png
+sudo wget -t 3 -T 60 --no-check-certificate https://www.lexaloffle.com/bbs/cposts/po/poom_0-9.p8.png -O ${fat32_mountpoint}/pico-8/carts/poom_0-9.p8.png
+sudo wget -t 3 -T 60 --no-check-certificate https://www.lexaloffle.com/bbs/cposts/ch/cherrybomb-0.p8.png -O ${fat32_mountpoint}/pico-8/carts/cherrybomb-0.p8.png
 
 # Copy default game launch images
 sudo cp launchimages/loading.ascii.${UNIT} ${fat32_mountpoint}/launchimages/loading.ascii

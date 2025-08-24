@@ -51,7 +51,6 @@ else
 fi
 echo "$NAME" | sudo tee Arkbuild/etc/hostname
 echo -e "# This host address\n127.0.1.1\t${NAME}" | sudo tee -a Arkbuild/etc/hosts
-#sudo sed -i '0,/localhost/s//localhost rgb10/' Arkbuild/etc/hosts
 
 # Copy the necessary .asoundrc file for proper audio in emulationstation and emulators
 sudo cp audio/.asoundrc Arkbuild/home/ark/.asoundrc
@@ -80,7 +79,6 @@ sudo chroot Arkbuild/ bash -c "systemctl enable audiostate"
 # Copy necessary tools for expansion of ROOTFS and convert fat32 games partition to exfat on initial boot
 sudo cp scripts/expandtoexfat.sh.${CHIPSET} ${mountpoint}/expandtoexfat.sh
 sudo cp scripts/firstboot.sh ${mountpoint}/firstboot.sh
-#sudo cp scripts/fstab.exfat.${CHIPSET} ${mountpoint}/fstab.exfat
 sudo cp scripts/firstboot.service Arkbuild/etc/systemd/system/firstboot.service
 sudo chroot Arkbuild/ bash -c "systemctl enable firstboot"
 
@@ -99,7 +97,7 @@ LABEL=ROOTFS / ${ROOT_FILESYSTEM_FORMAT} ${ROOT_FILESYSTEM_MOUNT_OPTIONS} 0 0
 
 LABEL=BOOT /boot vfat defaults 0 2
 LABEL=EASYROMS /roms exfat defaults,auto,umask=000,uid=1000,gid=1000,noatime 0 0
-/roms/tools /opt/system/Tools none bind
+/roms/tools /opt/system/Tools none nofail,x-systemd.device-timeout=7,bind
 EOF
 
 # Disable getty on tty0 and tty1
@@ -137,6 +135,9 @@ sudo cp dArkOS_Tools/${CHIPSET}/*.sh Arkbuild/opt/system/Advanced/
 sudo cp dArkOS_Tools/Advanced/*.sh Arkbuild/opt/system/Advanced/
 if [[ "$UNIT" == *"rgb10"* ]] || [[ "$UNIT" == "rk2020" ]] || [[ "$UNIT" == *"oga"* ]]; then
   sudo cp dArkOS_Tools/OGA/*.sh Arkbuild/opt/system/Advanced/
+else
+  sudo cp scripts/Switch* Arkbuild/usr/local/bin/
+  sudo cp scripts/"Switch to SD2 for Roms.sh" Arkbuild/opt/system/Advanced/
 fi
 sudo chroot Arkbuild/ bash -c "chown -R ark:ark /opt"
 sudo chmod -R 777 Arkbuild/opt/system/
@@ -164,6 +165,10 @@ sudo cp scripts/speak_bat_life.sh Arkbuild/usr/local/bin/
 sudo cp scripts/spktoggle.sh Arkbuild/usr/local/bin/
 sudo cp scripts/timezones Arkbuild/usr/local/bin/
 sudo cp global/* Arkbuild/usr/local/bin/
+# Disable winbin as connectivity to Active Directory is not needed
+sudo chroot Arkbuild/ bash -c "systemctl disable winbind"
+# Set the default graphical target to multi-user instead of graphical"
+sudo chroot Arkbuild/ bash -c "systemctl set-default multi-user.target"
 if [[ "$UNIT" == "rgb10" ]]; then
   sudo cp device/rgb10/* Arkbuild/usr/local/bin/
 elif [[ "$UNIT" == "rg351mp" ]]; then
@@ -238,6 +243,21 @@ cat <<EOF | sudo tee -a Arkbuild/etc/samba/smb.conf
    guest ok = yes
    read list = guest
 EOF
+if [[ "$UNIT" != *"rgb10"* ]] && [[ "$UNIT" != "rk2020" ]] && [[ "$UNIT" != *"oga"* ]]; then
+  cat <<EOF | sudo tee -a Arkbuild/etc/samba/smb.conf
+[roms2]
+   comment = ROMS2
+   path = /roms2
+   browsable = yes
+   read only = no
+   map archive = no
+   map system = no
+   map hidden = no
+   guest ok = yes
+   read list = guest
+EOF
+  fi
+
 sudo chroot Arkbuild/ bash -c "systemctl disable smbd"
 sudo chroot Arkbuild/ bash -c "systemctl disable nmbd"
 
@@ -270,14 +290,6 @@ sudo git clone --depth=1 https://github.com/dani7959/es-theme-replica.git Arkbui
 
 sync
 sudo umount -l ${mountpoint}
-#while true; do
-  #sleep 1
-  #if [[ -z "$(fuser -c ${mountpoint})" ]]; then
-    #break
-  #fi
-  #echo "${mountpoint} is still in use.  Attempting to force close processes using it..."
-  #sudo fuser -ckv -9 ${mountpoint}
-#done
 sudo losetup -d ${LOOP_BOOT}
 
 # Format rootfs partition in final image
@@ -309,6 +321,44 @@ while read GAME_SYSTEM; do
     sudo mkdir -p ${fat32_mountpoint}/${GAME_SYSTEM}
   fi
 done <game_systems.txt
+
+# Add latest version of PortMaster install to roms/tools folder
+for (( ; ; ))
+do
+ #wget -t 3 -T 60 --no-check-certificate https://github.com/PortsMaster/PortMaster-GUI/releases/download/8.5.22_0528/PortMaster.zip
+ PMver=$(curl --silent -qI https://github.com/PortsMaster/PortMaster-GUI/releases/latest | awk -F '/' '/^location/ {print  substr($NF, 1, length($NF)-1)}')
+ wget -t 3 -T 60 --no-check-certificate https://github.com/PortsMaster/PortMaster-GUI/releases/download/${PMver}/Install.PortMaster.sh
+ if [ $? == 0 ]; then
+  break
+ fi
+ sleep 10
+done
+sudo mv -f Install.PortMaster.sh ${fat32_mountpoint}/tools/Install.PortMaster.sh
+chmod 777 ${fat32_mountpoint}/tools/Install.PortMaster.sh
+
+# Add latest version of ThemeMaster to roms/tools folder
+for (( ; ; ))
+do
+ wget -t 3 -T 60 --no-check-certificate https://github.com/JohnIrvine1433/ThemeMaster/archive/refs/heads/master.zip
+ if [ $? == 0 ]; then
+  break
+ fi
+ sleep 10
+done
+sudo unzip -X -o master.zip -d ${fat32_mountpoint}/tools/
+sudo rm -rf ${fat32_mountpoint}/tools/ThemeMaster
+sudo mv -f ${fat32_mountpoint}/tools/ThemeMaster-master/ThemeMaster ${fat32_mountpoint}/tools/
+sudo mv -f ${fat32_mountpoint}/tools/ThemeMaster-master/ThemeMaster.sh ${fat32_mountpoint}/tools/
+sudo rm -rf ${fat32_mountpoint}/tools/ThemeMaster-master/
+rm -f master.zip
+
+# Get some sample pico-8 games
+sudo rm -rf /roms/pico-8/carts/*
+sudo wget -t 3 -T 60 --no-check-certificate https://www.lexaloffle.com/bbs/cposts/1/15133.p8.png -O ${fat32_mountpoint}/pico-8/carts/celeste.p8.png
+sudo wget -t 3 -T 60 --no-check-certificate https://www.lexaloffle.com/bbs/cposts/sc/scrap_boy-6.p8.png -O ${fat32_mountpoint}/pico-8/carts/scrap_boy-6.p8.png
+sudo wget -t 3 -T 60 --no-check-certificate https://www.lexaloffle.com/bbs/cposts/di/dinkykong-0.p8.png -O ${fat32_mountpoint}/pico-8/carts/dinkykong-0.p8.png
+sudo wget -t 3 -T 60 --no-check-certificate https://www.lexaloffle.com/bbs/cposts/po/poom_0-9.p8.png -O ${fat32_mountpoint}/pico-8/carts/poom_0-9.p8.png
+sudo wget -t 3 -T 60 --no-check-certificate https://www.lexaloffle.com/bbs/cposts/ch/cherrybomb-0.p8.png -O ${fat32_mountpoint}/pico-8/carts/cherrybomb-0.p8.png
 
 # Copy default game launch images
 sudo cp launchimages/loading.ascii.rgb10 ${fat32_mountpoint}/launchimages/loading.ascii

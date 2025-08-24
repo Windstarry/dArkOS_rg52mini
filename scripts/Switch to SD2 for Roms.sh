@@ -26,7 +26,7 @@ sudo umount /opt/system/Tools
 if [ "$filesystem" = "ext4" ]; then
    sudo mount -t $filesystem $blklocation /roms2
 else
-   sudo mount -t $filesystem $blklocation /roms2 -o umask=0000,iocharset=utf8,uid=1002,gid=1002
+   sudo mount -t $filesystem $blklocation /roms2 -o umask=0000,iocharset=utf8,uid=1000,gid=1000
 fi
 
 status=$?
@@ -47,9 +47,9 @@ then
   sudo mount /roms2/tools /opt/system/Tools
   sed -i '/<path>\/roms\//s//<path>\/roms2\//' /etc/emulationstation/es_systems.cfg
   if [ "$filesystem" = "ext4" ]; then
-     sudo sed -i '$a\/'"$blklocationforsed"' \/roms2 '"$filesystem"' defaults 0 1' /etc/fstab
+     sudo sed -i '$a\/'"$blklocationforsed"' \/roms2 '"$filesystem"' defaults,nofail,x-systemd.device-timeout=7 0 1' /etc/fstab
   else
-     sudo sed -i '$a\/'"$blklocationforsed"' \/roms2 '"$filesystem"' umask=0000,iocharset=utf8,noatime,uid=1002,gid=1002 0 0' /etc/fstab
+     sudo sed -i '$a\/'"$blklocationforsed"' \/roms2 '"$filesystem"' umask=0000,iocharset=utf8,noatime,nofail,x-systemd.device-timeout=7,uid=1000,gid=1000 0 0' /etc/fstab
   fi
   sudo sed -i '/roms\/tools/s//roms2\/tools/' /etc/fstab
   sudo sed -i '/roms\/pico-8/s//roms2\/pico-8/g' /usr/local/bin/pico8.sh

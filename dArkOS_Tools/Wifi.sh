@@ -89,9 +89,7 @@ ExitMenu() {
   if [[ ! -z $(pgrep -f gptokeyb) ]]; then
     pgrep -f gptokeyb | sudo xargs kill -9
   fi
-  if [[ ! -e "/dev/input/by-path/platform-odroidgo2-joypad-event-joystick" ]]; then
-    sudo setfont /usr/share/consolefonts/Lat7-Terminus20x10.psf.gz
-  fi
+  sudo setfont /usr/share/consolefonts/Lat7-Terminus20x10.psf.gz
   exit 0
 }
 
