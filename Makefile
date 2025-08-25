@@ -2,9 +2,11 @@ SHELL := /bin/bash
 
 DEBIAN_CODE_NAME ?= trixie
 ENABLE_CACHE ?= y
+BUILD_KODI ?= n
 
 export DEBIAN_CODE_NAME
 export ENABLE_CACHE
+export BUILD_KODI
 
 ifeq ($(DEBIAN_CODE_NAME),)
   $(error DEBIAN_CODE_NAME is not set. Please run with DEBIAN_CODE_NAME=suite (e.g., trixie))

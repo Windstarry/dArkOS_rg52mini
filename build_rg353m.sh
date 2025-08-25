@@ -67,7 +67,9 @@ source ./build_ti99sim.sh
 source ./build_openmsxsa.sh
 source ./build_dolphinsa.sh
 source ./build_drastic.sh
-source ./build_kodi.sh
+if [[ "${BUILD_KODI}" == "y" ]]; then
+  source ./build_kodi.sh
+fi
 source ./finishing_touches-rk3566.sh
 source ./cleanup_filesystem.sh
 source ./write_rootfs-rk3566.sh
