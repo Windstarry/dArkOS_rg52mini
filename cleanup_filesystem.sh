@@ -11,7 +11,6 @@ call_chroot "apt remove -y autotools-dev \
   ccache \
   clang \
   cmake \
-  espeak-ng-data:armhf \
   g++ \
   liba52-0.7.4-dev \
   libasound2-dev \
@@ -24,9 +23,7 @@ call_chroot "apt remove -y autotools-dev \
   libcurl4-openssl-dev \
   libdrm-dev \
   libeigen3-dev \
-  libespeak-ng1:armhf \
   libevdev-dev \
-  libfmt10:armhf \
   libxext-dev \
   libfaad-dev \
   libflac-dev \
@@ -34,7 +31,6 @@ call_chroot "apt remove -y autotools-dev \
   libfreetype-dev \
   libfribidi-dev \
   libglew-dev \
-  libhiredis1.1.0:armhf \
   libjpeg62-turbo-dev \
   libluajit-5.1-dev \
   libmad0-dev \
@@ -45,7 +41,6 @@ call_chroot "apt remove -y autotools-dev \
   libnl-route-3-dev \
   libogg-dev \
   libopenal-dev \
-  libpcaudio0:armhf \
   libphysfs-dev \
   libpng-dev \
   libsdl2-dev \
@@ -55,7 +50,6 @@ call_chroot "apt remove -y autotools-dev \
   libsdl2-ttf-dev \
   libslirp-dev \
   libsm-dev \
-  libsonic0:armhf \
   libsoxr-dev \
   libspeechd-dev \
   libssl-dev \
@@ -71,7 +65,6 @@ call_chroot "apt remove -y autotools-dev \
   libx11-dev \
   libx11-xcb1 \
   libxcb-dri2-0 \
-  libxxhash0:armhf \
   libyaml-dev \
   libzip-dev \
   ninja-build \
