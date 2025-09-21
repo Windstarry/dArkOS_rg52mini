@@ -21,7 +21,7 @@ else
 fi
 IMAGE_SIZE=7.5G
 SECTOR_SIZE=512
-BUILD_SIZE=55000     # Initial file system size in MB during the build.  Then will be reduced to the DISK_SIZE or below upon completion
+BUILD_SIZE=52000     # Initial file system size in MB during the build.  Then will be reduced to the DISK_SIZE or below upon completion
 FILESYSTEM="ArkOS_File_System.img"
 
 # Create blank image
