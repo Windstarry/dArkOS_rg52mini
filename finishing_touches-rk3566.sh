@@ -124,6 +124,7 @@ sudo cp dArkOS_Tools/${CHIPSET}/"Enable Low Battery Warning".sh Arkbuild/usr/loc
 sudo cp dArkOS_Tools/${CHIPSET}/"Disable Low Battery Warning".sh Arkbuild/usr/local/bin/
 sudo rm Arkbuild/opt/system/Advanced/"Enable Low Battery Warning".sh
 sudo cp dArkOS_Tools/Advanced/*.sh Arkbuild/opt/system/Advanced/
+sudo cp scripts/"Enable Quick Mode".sh Arkbuild/opt/system/Advanced/
 sudo cp scripts/${CHIPSET}/"Fix Audio".sh Arkbuild/opt/system/Advanced/
 sudo cp scripts/"Switch to SD2 for Roms.sh" Arkbuild/opt/system/Advanced/
 sudo chroot Arkbuild/ bash -c "chown -R ark:ark /opt"

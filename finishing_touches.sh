@@ -136,6 +136,7 @@ sudo mkdir -p Arkbuild/opt/system/Advanced
 sudo cp dArkOS_Tools/*.sh Arkbuild/opt/system/
 sudo cp dArkOS_Tools/${CHIPSET}/*.sh Arkbuild/opt/system/Advanced/
 sudo cp dArkOS_Tools/Advanced/*.sh Arkbuild/opt/system/Advanced/
+sudo cp scripts/"Enable Quick Mode".sh Arkbuild/opt/system/Advanced/
 if [[ "$UNIT" == *"rgb10"* ]] || [[ "$UNIT" == "rk2020" ]] || [[ "$UNIT" == *"oga"* ]]; then
   sudo cp dArkOS_Tools/OGA/*.sh Arkbuild/opt/system/Advanced/
 else
