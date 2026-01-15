@@ -263,9 +263,16 @@ elif [[ "$UNIT" == "rg351mp" ]] || [[ "$UNIT" == "g350" ]] || [[ "$UNIT" == "a10
   sudo cp device/rg351mp/*.red Arkbuild/usr/local/bin/
   sudo cp device/rg351mp/fix_power_led Arkbuild/usr/local/bin/
   sudo cp device/rg351mp/checkbrightonboot Arkbuild/usr/local/bin/
-  sudo cp device/rg351mp/"Change LED to Red.sh" Arkbuild/opt/system/
-  sudo chroot Arkbuild/ bash -c "chown -R ark:ark /opt"
-  sudo chmod 777 Arkbuild/opt/system/"Change LED to Red.sh"
+  if [[ "$UNIT" == "a10mini" ]]; then
+    sudo cp device/a10mini/"Change LED to Green.sh" Arkbuild/opt/system/"Change LED to Orange.sh"
+    sudo mv -f Arkbuild/usr/local/bin/"Change LED to Red.sh" Arkbuild/usr/local/bin/"Change LED to Blue.sh"
+    sudo chroot Arkbuild/ bash -c "chown -R ark:ark /opt"
+    sudo chmod 777 Arkbuild/opt/system/"Change LED to Orange.sh"
+  else
+    sudo cp device/rg351mp/"Change LED to Red.sh" Arkbuild/opt/system/
+    sudo chroot Arkbuild/ bash -c "chown -R ark:ark /opt"
+    sudo chmod 777 Arkbuild/opt/system/"Change LED to Red.sh"
+  fi
   sudo cp device/rg351mp/*.service Arkbuild/etc/systemd/system/
   sudo chroot Arkbuild/ bash -c "systemctl enable 351mp batt_led"
 fi
