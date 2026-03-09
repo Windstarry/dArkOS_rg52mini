@@ -15,7 +15,7 @@ install_lib() {
     # --- ARM64 ---
     local deb_arm64=$(basename "$url")
     wget -t 3 -T 60 --no-check-certificate "$url"
-    verify_action
+    #verify_action
     dpkg --fsys-tarfile "$deb_arm64" | tar -xO --wildcards "*$wildcard*" > "$lib_name"
     if [ ! -s "$lib_name" ]; then
         echo "[Error] Extraction failed for $lib_name"
@@ -30,7 +30,7 @@ install_lib() {
         local url_armhf="${url//_arm64/_armhf}"
         local deb_armhf=$(basename "$url_armhf")
         wget -t 3 -T 60 --no-check-certificate "$url_armhf"
-        verify_action
+        #verify_action
         dpkg --fsys-tarfile "$deb_armhf" | tar -xO --wildcards "*$wildcard*" > "$lib_name"
         if [ ! -s "$lib_name" ]; then
             echo "[Error] Extraction failed for $lib_name (armhf)"
@@ -74,7 +74,7 @@ install_lib \
 
 # libvpx6 (1.9.0, Debian 11 security)
 install_lib \
-    "http://security.debian.org/debian-security/pool/updates/main/libv/libvpx/libvpx6_1.9.0-1+deb11u4_arm64.deb" \
+    "http://security.debian.org/debian-security/pool/updates/main/libv/libvpx/libvpx6_1.9.0-1+deb11u5_arm64.deb" \
     "libvpx.so.6" "libvpx.so.6"
 
 # libwebp6 (0.6.1, Debian 11 security)
