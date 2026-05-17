@@ -41,8 +41,14 @@ do
 
 		sudo chmod 666 /dev/tty1
 
+		# Stop NetworkManager during extract to prevent its inotify watcher on
+		# /etc/NetworkManager/system-connections/ from racing tar's writes and
+		# leaving the .nmconnection files at 0 bytes.
+		sudo systemctl stop NetworkManager
 		sudo tar --same-owner -zxhvf "$BACKUP_FILE" -C / | tee -a "$LOG_FILE"
-		if [ $? -eq 0 ]; then
+		TAR_STATUS=$?
+		sudo systemctl start NetworkManager
+		if [ $TAR_STATUS -eq 0 ]; then
 			# Properly restore previously set timezone
 			[ -f /dev/shm/TZ ] && ln -sf /usr/share/zoneinfo/$(cat /dev/shm/TZ) /etc/localtime && sudo rm /dev/shm/TZ
 			# Properly restore preferred Switch button tap to off state
