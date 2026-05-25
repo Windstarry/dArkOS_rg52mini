@@ -183,20 +183,28 @@ source ./fetch_compat_libs.sh
 # Various tools available through Options added here
 sudo mkdir -p Arkbuild/opt/system/Advanced
 sudo cp dArkOS_Tools/*.sh Arkbuild/opt/system/
-if [ -d "dArkOS_Tools/${CHIPSET}" ]; then
-  sudo cp dArkOS_Tools/${CHIPSET}/*.sh Arkbuild/opt/system/Advanced/
-  if [ -f "dArkOS_Tools/${CHIPSET}/Enable Low Battery Warning.sh" ]; then
-    sudo cp "dArkOS_Tools/${CHIPSET}/Enable Low Battery Warning.sh" Arkbuild/usr/local/bin/
-  fi
-  if [ -f "dArkOS_Tools/${CHIPSET}/Disable Low Battery Warning.sh" ]; then
-    sudo cp "dArkOS_Tools/${CHIPSET}/Disable Low Battery Warning.sh" Arkbuild/usr/local/bin/
-  fi
+# Scripts in dArkOS_Tools/rk3562/ are device-specific -- installed explicitly
+# below rather than via a wildcard so each script only lands on the device(s)
+# whose hardware can use it.
+if [ -f "dArkOS_Tools/${CHIPSET}/Enable Low Battery Warning.sh" ]; then
+  sudo cp "dArkOS_Tools/${CHIPSET}/Enable Low Battery Warning.sh" Arkbuild/opt/system/Advanced/
+  sudo cp "dArkOS_Tools/${CHIPSET}/Enable Low Battery Warning.sh" Arkbuild/usr/local/bin/
+fi
+if [ -f "dArkOS_Tools/${CHIPSET}/Disable Low Battery Warning.sh" ]; then
+  sudo cp "dArkOS_Tools/${CHIPSET}/Disable Low Battery Warning.sh" Arkbuild/opt/system/Advanced/
+  sudo cp "dArkOS_Tools/${CHIPSET}/Disable Low Battery Warning.sh" Arkbuild/usr/local/bin/
 fi
 # Button swap scripts (RG52 Mini only -- has both HOME/FN and BACK buttons)
 if [ "$UNIT" == "rg52mini" ]; then
   sudo cp "dArkOS_Tools/rk3562/Swap Start+Select with FN+Back.sh" Arkbuild/opt/system/Advanced/
   sudo cp "dArkOS_Tools/rk3562/Swap Start+Select with FN+Back.sh" Arkbuild/usr/local/bin/
   sudo cp "dArkOS_Tools/rk3562/Restore Start+Select.sh" Arkbuild/usr/local/bin/
+fi
+# Left stick inversion toggle (RG43H Pro / RG43V Pro -- shared DTB enables
+# inversion to match RG43H wiring; RG43V Pro left stick is wired opposite and
+# needs the inversion disabled at runtime).
+if [ "$UNIT" == "rg43h" ] || [ "$UNIT" == "rg43v" ]; then
+  sudo cp "dArkOS_Tools/rk3562/Left Stick Invert Toggle.sh" Arkbuild/opt/system/Advanced/
 fi
 sudo cp dArkOS_Tools/Advanced/*.sh Arkbuild/opt/system/Advanced/
 sudo cp scripts/"Enable Quick Mode".sh Arkbuild/opt/system/Advanced/
@@ -227,6 +235,9 @@ echo 'SUBSYSTEM=="dma_heap", MODE="0666"' | sudo tee Arkbuild/etc/udev/rules.d/9
 
 # Joystick button swap persistence -- restore swap state on boot if flag file exists
 echo 'ACTION=="add", SUBSYSTEM=="platform", DRIVER=="rk3562-joystick", RUN+="/bin/sh -c '\''test -f /home/ark/.config/.SWAP_START_HOME && echo 1 > /sys%p/swap_start_home'\''"' | sudo tee Arkbuild/etc/udev/rules.d/99-joystick-swap.rules
+
+# Left stick inversion override -- disable DT-default inversion on boot if flag file exists
+echo 'ACTION=="add", SUBSYSTEM=="platform", DRIVER=="rk3562-joystick", RUN+="/bin/sh -c '\''test -f /home/ark/.config/.LEFT_STICK_NOT_INVERTED && echo 0 > /sys%p/left_stick_invert'\''"' | sudo tee Arkbuild/etc/udev/rules.d/99-joystick-invert.rules
 
 # RK817 PMIC poweroff service — bypasses ATF's broken SYSTEM_OFF
 # (ATF asserts SLPPIN with pmic-reset-func=0 → resets instead of powering off)
