@@ -94,8 +94,15 @@ if [ ! -f "Arkbuild/opt/pcsx2/bin/pcsx2-sdl" ]; then
 
     # Configure + build PCSX2 SDL frontend.
     # - SDL3 from /opt/sdl3-shim via PKG_CONFIG_PATH.
-    # - OVERRIDE_HOST_PAGE_SIZE=4096: configure-time detection picks up the
-    #   build host's kernel, not the target.
+    # - HOST_PAGE_SIZE=4096 / HOST_CACHE_LINE_SIZE=64: BuildParameters.cmake
+    #   calls detect_page_size() / detect_cache_line_size() which try_run a
+    #   sysconf probe on the build host; if the chroot ever runs on a 16K-page
+    #   aarch64 host (e.g. Asahi M2) the detected values get baked into the
+    #   binary and it bails with "Page size mismatch" on the 4K-page RK3562.
+    #   Setting the cache vars directly pre-empts the auto-detect (set(...
+    #   CACHE ...) respects an existing value). NB: -DOVERRIDE_HOST_PAGE_SIZE
+    #   on the cmdline is silently ignored — that's the generated #define name,
+    #   not a cmake input.
     # - X11_API/WAYLAND_API OFF: VK_KHR_display direct-to-monitor is the
     #   only display path PCSX2 needs — no compositor, no SDL_Vulkan_CreateSurface.
     # - RPATH: SDL3 shim and PCSX2's own lib dir.
@@ -114,7 +121,8 @@ if [ ! -f "Arkbuild/opt/pcsx2/bin/pcsx2-sdl" ]; then
             -DUSE_VULKAN=ON -DUSE_OPENGL=ON \
             -DUSE_BACKTRACE=OFF \
             -DX11_API=OFF -DWAYLAND_API=OFF \
-            -DOVERRIDE_HOST_PAGE_SIZE=4096 \
+            -DHOST_PAGE_SIZE=4096 \
+            -DHOST_CACHE_LINE_SIZE=64 \
             -DCMAKE_C_FLAGS='-march=armv8-a -moutline-atomics -O3' \
             -DCMAKE_CXX_FLAGS='-march=armv8-a -moutline-atomics -O3' \
             -DCMAKE_BUILD_RPATH='/opt/sdl3-shim/lib;/opt/pcsx2/lib' \
