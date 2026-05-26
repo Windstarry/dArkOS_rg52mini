@@ -148,11 +148,19 @@ if [ "$UNIT" == "rg43h" ]; then
   echo "vm.swappiness=10" | sudo tee Arkbuild/etc/sysctl.d/99-swap.conf
 fi
 
-# Load rk915 WiFi kernel module at boot
-# The rk915 driver uses a platform alias (platform:rk915) and won't auto-load
-# from SDIO enumeration alone — it must be loaded explicitly so it can claim
-# the SDIO device when the bus is scanned.
+# Load WiFi kernel modules at boot.
+# There are two RG52 Mini hardware revisions with different WiFi chips:
+#   rev A: RK915 (Microchip WILC1000) — SDIO vendor 0x0296
+#   rev B: AIC8800DL (Aicsemi)         — SDIO vendor 0xc8a1
+# Both drivers are built as modules and loaded unconditionally. Only the
+# driver whose SDIO vendor ID matches the chip actually present binds; the
+# other stays idle. Both use the same wireless-wlan DT node and the shared
+# rockchip_wifi_power() GPIO helper, so there is no per-rev DT change.
+# (rk915 uses a platform alias and won't auto-load from SDIO enumeration
+# alone — explicit load via modules-load.d is required.)
 echo "rk915" | sudo tee -a Arkbuild/etc/modules-load.d/modules.conf
+echo "aic8800_bsp" | sudo tee -a Arkbuild/etc/modules-load.d/modules.conf
+echo "aic8800_fdrv" | sudo tee -a Arkbuild/etc/modules-load.d/modules.conf
 
 # Disable some unneeded interfaces in NetworkManager
 cat <<EOF | sudo tee -a Arkbuild/etc/NetworkManager/NetworkManager.conf
