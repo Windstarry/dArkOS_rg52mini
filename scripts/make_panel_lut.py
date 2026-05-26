@@ -1,88 +1,314 @@
 #!/usr/bin/env python3
 """
-make_panel_lut.py — generate a 1D gamma LUT for the Rockchip VOP2.
+make_panel_lut.py — generate a 3D color-correction LUT for the Rockchip VOP2.
 
-Output format matches Linux DRM's struct drm_color_lut:
-    1024 entries of (R, G, B, reserved) as 4× u16 little-endian
-    Total: 8192 bytes
+Produces a 9×9×9 = 729-entry LUT in DRM color_lut format (4× u16 per entry,
+total 5832 bytes) that maps sRGB input to the panel's native RGB drive
+values needed to faithfully reproduce sRGB color on a non-sRGB panel.
 
-The LUT is consumed by apply_panel_lut.py on the device, which loads it
-into the VOP2 hardware via drmModeCrtcSetGamma. Once loaded, the
-hardware applies it for every pixel during scanout with zero CPU cost.
+Pipeline:
+  1. Build the panel's RGB→XYZ matrix from its primary chromaticities + white.
+  2. Take the published sRGB→XYZ matrix (D65).
+  3. Build a Bradford chromatic-adaptation matrix from D65 to panel native white.
+  4. Combined matrix M = M_panel⁻¹ · M_CAT · M_sRGB takes a linear sRGB triple
+     to the linear panel-RGB drive values that produce the same color.
+  5. Sample on the 9×9×9 input grid (input is gamma-encoded; apply sRGB EOTF
+     to linearize, multiply by M, hard-clip to [0,1] for out-of-gamut input,
+     apply sRGB OETF to re-encode).
+  6. Quantize to u16 (round to 0..65535) and serialize.
 
-The LUT shape is: out_channel = (in_value/1023)^gamma_channel * gain_channel * 65535
+Output index convention: R varies fastest, B slowest
+  index(r, g, b) = r + g*N + b*N*N    (N = 9)
 
-Where:
-  in_value   : raw 10-bit input gray code (0..1023)
-  gain_*     : per-channel multiplier (1.0 = unity)
-  gamma_*    : per-channel power-law exponent (1.0 = linear ramp through LUT)
-  65535      : 16-bit u16 max output value
+Per-channel precision: 12 bits. The VOP2 cubic-LUT hardware uses 12-bit
+values per channel; the kernel driver masks each drm_color_lut field
+with 0xfff before packing to hardware. We quantize to 4095 and leave
+the high 4 bits of each u16 zero so nothing is silently truncated.
 
-For the RG43H cool tint, the typical first guess is something like:
-  R 1.00, G 0.96, B 0.85  (per-channel gains)
-  gamma 1.0 across all channels (don't apply additional gamma curve;
-  let the panel side handle gamma).
+Defaults are calibrated for the JC-TLCM4505 panel used in the AISLPC RG43H Pro:
+  R: (0.664, 0.323)
+  G: (0.287, 0.593)
+  B: (0.134, 0.119)
+  W: (0.299, 0.327)   ← spec typical
+Target: ~6300K = (0.3160, 0.3310) — slightly warmer than D65 (6504K, x=0.3127,
+y=0.3290) to compensate for the perceived cool shift at typical handheld
+brightness (~60% backlight). At full brightness this lands a hair warm;
+at 60% it reads as neutral white.
+
+Loaded by apply_panel_lut.py via the atomic DRM CUBIC_LUT property.
 """
 
 import argparse
 import struct
 import sys
 
-LUT_SIZE = 1024
+CUBE_N = 9                  # 9x9x9
+LUT_SIZE = CUBE_N ** 3      # 729
+BYTES_PER_ENTRY = 8         # u16 R, G, B, reserved
+OUTPUT_BYTES = LUT_SIZE * BYTES_PER_ENTRY  # 5832
 
 
-def make_lut(r_gain, g_gain, b_gain, r_gamma, g_gamma, b_gamma):
-    """Return the 8192-byte LUT as bytes."""
+# ---------------------------------------------------------------------------
+# 3x3 matrix helpers (pure Python, no NumPy)
+# ---------------------------------------------------------------------------
+
+def mat_mul(A, B):
+    return [[sum(A[i][k] * B[k][j] for k in range(3)) for j in range(3)] for i in range(3)]
+
+
+def mat_vec(M, v):
+    return [sum(M[i][k] * v[k] for k in range(3)) for i in range(3)]
+
+
+def mat_inv(M):
+    a, b, c = M[0]
+    d, e, f = M[1]
+    g, h, i = M[2]
+    det = a*(e*i - f*h) - b*(d*i - f*g) + c*(d*h - e*g)
+    if abs(det) < 1e-12:
+        raise ValueError("singular matrix")
+    inv_det = 1.0 / det
+    return [
+        [(e*i - f*h) * inv_det, (c*h - b*i) * inv_det, (b*f - c*e) * inv_det],
+        [(f*g - d*i) * inv_det, (a*i - c*g) * inv_det, (c*d - a*f) * inv_det],
+        [(d*h - e*g) * inv_det, (b*g - a*h) * inv_det, (a*e - b*d) * inv_det],
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Color space math
+# ---------------------------------------------------------------------------
+
+def xyY_to_XYZ(x, y, Y=1.0):
+    """xy chromaticity (+ luminance Y) → XYZ."""
+    if y <= 0:
+        return [0.0, 0.0, 0.0]
+    return [x * Y / y, Y, (1.0 - x - y) * Y / y]
+
+
+def rgb_to_xyz_matrix(rx, ry, gx, gy, bx, by, wx, wy):
+    """
+    Build the RGB→XYZ matrix for a display with the given primary
+    chromaticities and white point.
+
+    The 3 columns are the XYZ of R=1,G=0,B=0 / R=0,G=1,B=0 / R=0,G=0,B=1
+    respectively, scaled so that R=G=B=1 produces the white point at Y=1.
+    """
+    # Unscaled column vectors: each primary at xy with Y=1.
+    M_primaries = [
+        [rx / ry,           gx / gy,           bx / by          ],
+        [1.0,               1.0,               1.0              ],
+        [(1 - rx - ry) / ry,(1 - gx - gy) / gy,(1 - bx - by) / by],
+    ]
+    # Solve for per-primary luminance scaling (Y_R, Y_G, Y_B) such that
+    # M_primaries · [Y_R, Y_G, Y_B] = white_XYZ (with white at Y=1).
+    W = xyY_to_XYZ(wx, wy, 1.0)
+    M_inv = mat_inv(M_primaries)
+    S = mat_vec(M_inv, W)
+    # Scale each column by its luminance.
+    return [[M_primaries[i][j] * S[j] for j in range(3)] for i in range(3)]
+
+
+def bradford_cat(src_white_xy, dst_white_xy):
+    """
+    Bradford chromatic adaptation matrix from src to dst white point.
+    src and dst given as (x, y).
+    """
+    M_BFD = [
+        [ 0.8951,  0.2664, -0.1614],
+        [-0.7502,  1.7135,  0.0367],
+        [ 0.0389, -0.0685,  1.0296],
+    ]
+    M_BFD_inv = mat_inv(M_BFD)
+
+    src_XYZ = xyY_to_XYZ(*src_white_xy)
+    dst_XYZ = xyY_to_XYZ(*dst_white_xy)
+    src_LMS = mat_vec(M_BFD, src_XYZ)
+    dst_LMS = mat_vec(M_BFD, dst_XYZ)
+
+    D = [
+        [dst_LMS[0] / src_LMS[0], 0.0,                       0.0                      ],
+        [0.0,                       dst_LMS[1] / src_LMS[1], 0.0                      ],
+        [0.0,                       0.0,                       dst_LMS[2] / src_LMS[2]],
+    ]
+    return mat_mul(M_BFD_inv, mat_mul(D, M_BFD))
+
+
+def srgb_eotf(x):
+    """sRGB encoded → linear (per-channel)."""
+    if x <= 0.04045:
+        return x / 12.92
+    return ((x + 0.055) / 1.055) ** 2.4
+
+
+def srgb_oetf(x):
+    """linear → sRGB encoded (per-channel), clamped to [0,1]."""
+    if x <= 0.0:
+        return 0.0
+    if x >= 1.0:
+        return 1.0
+    if x <= 0.0031308:
+        return x * 12.92
+    return 1.055 * (x ** (1.0 / 2.4)) - 0.055
+
+
+# ---------------------------------------------------------------------------
+# LUT construction
+# ---------------------------------------------------------------------------
+
+def build_correction_matrix(panel_R, panel_G, panel_B, panel_W,
+                             srgb_R=(0.640, 0.330),
+                             srgb_G=(0.300, 0.600),
+                             srgb_B=(0.150, 0.060),
+                             srgb_W=(0.3127, 0.3290)):
+    """
+    Returns the 3×3 matrix that maps a linear sRGB triple to the linear
+    panel-RGB drive values that produce that sRGB color on the panel.
+    """
+    M_sRGB = rgb_to_xyz_matrix(*srgb_R, *srgb_G, *srgb_B, *srgb_W)
+    M_panel = rgb_to_xyz_matrix(*panel_R, *panel_G, *panel_B, *panel_W)
+    M_panel_inv = mat_inv(M_panel)
+    M_CAT = bradford_cat(srgb_W, panel_W)
+    # panel_lin = M_panel_inv · M_CAT · M_sRGB · srgb_lin
+    return mat_mul(M_panel_inv, mat_mul(M_CAT, M_sRGB))
+
+
+def build_3d_lut(M):
+    """
+    Sample the correction matrix on a 9×9×9 grid and return 5832 bytes
+    of DRM color_lut data.
+
+    Input/output channels are gamma-encoded (sRGB). The matrix is applied
+    in linear-light space.
+    """
     out = bytearray()
-    for i in range(LUT_SIZE):
-        x = i / (LUT_SIZE - 1)  # 0.0 .. 1.0 normalized
-        r = min(65535, int(round(((x ** r_gamma) * r_gain) * 65535)))
-        g = min(65535, int(round(((x ** g_gamma) * g_gain) * 65535)))
-        b = min(65535, int(round(((x ** b_gamma) * b_gain) * 65535)))
-        out.extend(struct.pack('<HHHH', max(0, r), max(0, g), max(0, b), 0))
+    # R varies fastest, G middle, B slowest — index = r + g*N + b*N*N.
+    # This is the standard IRIDAS .cube convention; the VOP2 hardware
+    # uses the same convention.
+    for b_idx in range(CUBE_N):
+        for g_idx in range(CUBE_N):
+            for r_idx in range(CUBE_N):
+                r_enc = r_idx / (CUBE_N - 1)
+                g_enc = g_idx / (CUBE_N - 1)
+                b_enc = b_idx / (CUBE_N - 1)
+
+                # Linearize via sRGB EOTF.
+                lin = [srgb_eotf(r_enc), srgb_eotf(g_enc), srgb_eotf(b_enc)]
+
+                # Apply correction matrix.
+                drive = mat_vec(M, lin)
+
+                # Hard-clip out-of-gamut to [0, 1].
+                drive = [max(0.0, min(1.0, v)) for v in drive]
+
+                # Re-encode and quantize to 12 bits (hardware width).
+                r_u16 = int(round(srgb_oetf(drive[0]) * 4095))
+                g_u16 = int(round(srgb_oetf(drive[1]) * 4095))
+                b_u16 = int(round(srgb_oetf(drive[2]) * 4095))
+
+                out.extend(struct.pack('<HHHH',
+                                       max(0, min(4095, r_u16)),
+                                       max(0, min(4095, g_u16)),
+                                       max(0, min(4095, b_u16)),
+                                       0))
     return bytes(out)
 
 
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+def fmt_mat(M, name):
+    lines = [f"{name}:"]
+    for row in M:
+        lines.append("  " + "  ".join(f"{v:+.6f}" for v in row))
+    return "\n".join(lines)
+
+
 def main():
-    ap = argparse.ArgumentParser(description=__doc__,
-                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     ap.add_argument('-o', '--output', required=True,
-                    help='Output .lut file path')
-    ap.add_argument('--red',   type=float, default=1.00,
-                    help='Red channel gain (default 1.00)')
-    ap.add_argument('--green', type=float, default=0.96,
-                    help='Green channel gain (default 0.96)')
-    ap.add_argument('--blue',  type=float, default=0.85,
-                    help='Blue channel gain (default 0.85, pulls cool down)')
-    ap.add_argument('--gamma',     type=float, default=1.0,
-                    help='Gamma exponent applied to all channels (default 1.0 — linear)')
-    ap.add_argument('--gamma-red',   type=float, default=None)
-    ap.add_argument('--gamma-green', type=float, default=None)
-    ap.add_argument('--gamma-blue',  type=float, default=None)
+                    help='Output .lut file path (5832 bytes)')
+
+    # Panel primary chromaticities — defaults from JC-TLCM4505 datasheet.
+    ap.add_argument('--panel-rx', type=float, default=0.664)
+    ap.add_argument('--panel-ry', type=float, default=0.323)
+    ap.add_argument('--panel-gx', type=float, default=0.287)
+    ap.add_argument('--panel-gy', type=float, default=0.593)
+    ap.add_argument('--panel-bx', type=float, default=0.134)
+    ap.add_argument('--panel-by', type=float, default=0.119)
+    ap.add_argument('--panel-wx', type=float, default=0.299)
+    ap.add_argument('--panel-wy', type=float, default=0.327)
+
+    # Target white point. Defaults nudged ~100K warmer than D65 to compensate
+    # for the perceived cool shift at typical handheld brightness; see the
+    # module docstring for the rationale.
+    ap.add_argument('--target-wx', type=float, default=0.3160)
+    ap.add_argument('--target-wy', type=float, default=0.3310)
+
+    ap.add_argument('--dump-matrix', action='store_true',
+                    help='Print intermediate matrices for sanity checking')
+
     args = ap.parse_args()
 
-    r_gamma = args.gamma_red   if args.gamma_red   is not None else args.gamma
-    g_gamma = args.gamma_green if args.gamma_green is not None else args.gamma
-    b_gamma = args.gamma_blue  if args.gamma_blue  is not None else args.gamma
+    panel_R = (args.panel_rx, args.panel_ry)
+    panel_G = (args.panel_gx, args.panel_gy)
+    panel_B = (args.panel_bx, args.panel_by)
+    panel_W = (args.panel_wx, args.panel_wy)
+    target_W = (args.target_wx, args.target_wy)
 
-    print(f"Generating LUT with:")
-    print(f"  R: gain={args.red:.3f}  gamma={r_gamma:.3f}")
-    print(f"  G: gain={args.green:.3f}  gamma={g_gamma:.3f}")
-    print(f"  B: gain={args.blue:.3f}  gamma={b_gamma:.3f}")
+    print(f"Panel primaries:")
+    print(f"  R = ({panel_R[0]:.3f}, {panel_R[1]:.3f})")
+    print(f"  G = ({panel_G[0]:.3f}, {panel_G[1]:.3f})")
+    print(f"  B = ({panel_B[0]:.3f}, {panel_B[1]:.3f})")
+    print(f"  W = ({panel_W[0]:.3f}, {panel_W[1]:.3f})")
+    print(f"Target white = ({target_W[0]:.4f}, {target_W[1]:.4f})")
 
-    data = make_lut(args.red, args.green, args.blue, r_gamma, g_gamma, b_gamma)
-    assert len(data) == LUT_SIZE * 8
+    M = build_correction_matrix(
+        panel_R, panel_G, panel_B, panel_W,
+        srgb_W=target_W,
+    )
+
+    if args.dump_matrix:
+        M_panel = rgb_to_xyz_matrix(*panel_R, *panel_G, *panel_B, *panel_W)
+        M_sRGB = rgb_to_xyz_matrix(
+            0.640, 0.330, 0.300, 0.600, 0.150, 0.060,
+            target_W[0], target_W[1],
+        )
+        M_CAT = bradford_cat(target_W, panel_W)
+        print()
+        print(fmt_mat(M_sRGB,  "M_sRGB (sRGB linear → XYZ)"))
+        print(fmt_mat(M_panel, "M_panel (panel linear → XYZ)"))
+        print(fmt_mat(M_CAT,   "M_CAT (D65 → panel white)"))
+        print(fmt_mat(M,       "M (sRGB linear → panel linear)"))
+        print()
+
+    data = build_3d_lut(M)
+    assert len(data) == OUTPUT_BYTES, f"LUT size {len(data)} != {OUTPUT_BYTES}"
 
     with open(args.output, 'wb') as f:
         f.write(data)
-    print(f"Wrote {args.output} ({len(data)} bytes)")
 
-    # Show endpoint values for sanity
-    last_r, last_g, last_b, _ = struct.unpack_from('<HHHH', data, (LUT_SIZE - 1) * 8)
-    print(f"  White output: R=0x{last_r:04x} ({last_r}) "
-          f"G=0x{last_g:04x} ({last_g}) "
-          f"B=0x{last_b:04x} ({last_b})")
-    print(f"  Black output: R=G=B=0x0000")
+    print(f"Wrote {args.output} ({len(data)} bytes, {LUT_SIZE} entries, 9×9×9 cube)")
+
+    # Endpoint sanity.
+    def entry(r, g, b):
+        idx = r + g*CUBE_N + b*CUBE_N*CUBE_N
+        return struct.unpack_from('<HHHH', data, idx * BYTES_PER_ENTRY)
+
+    print(f"  black input → R=0x{entry(0,0,0)[0]:04x} "
+          f"G=0x{entry(0,0,0)[1]:04x} B=0x{entry(0,0,0)[2]:04x}")
+    print(f"  white input → R=0x{entry(8,8,8)[0]:04x} "
+          f"G=0x{entry(8,8,8)[1]:04x} B=0x{entry(8,8,8)[2]:04x}")
+    print(f"  red input   → R=0x{entry(8,0,0)[0]:04x} "
+          f"G=0x{entry(8,0,0)[1]:04x} B=0x{entry(8,0,0)[2]:04x}")
+    print(f"  green input → R=0x{entry(0,8,0)[0]:04x} "
+          f"G=0x{entry(0,8,0)[1]:04x} B=0x{entry(0,8,0)[2]:04x}")
+    print(f"  blue input  → R=0x{entry(0,0,8)[0]:04x} "
+          f"G=0x{entry(0,0,8)[1]:04x} B=0x{entry(0,0,8)[2]:04x}")
 
 
 if __name__ == '__main__':

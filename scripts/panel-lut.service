@@ -1,5 +1,5 @@
 [Unit]
-Description=Apply panel color-temperature LUT to VOP2 hardware gamma table
+Description=Apply panel color-correction 3D LUT to VOP2 CUBIC_LUT hardware
 After=emulationstation.service
 ConditionPathExists=/etc/panel-lut/current.lut
 
