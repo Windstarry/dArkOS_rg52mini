@@ -1,0 +1,12 @@
+[Unit]
+Description=Apply panel color-temperature LUT to VOP2 hardware gamma table
+After=emulationstation.service
+ConditionPathExists=/etc/panel-lut/current.lut
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/apply-panel-lut /etc/panel-lut/current.lut
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

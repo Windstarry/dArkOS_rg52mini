@@ -74,6 +74,13 @@ case $1 in
     # Restore audio state
     sudo /usr/sbin/alsactl restore -f /var/local/asound.state
 
+    # Re-apply panel color-temperature LUT to VOP2 (CRTC state is reset
+    # across suspend; the gamma table loses its programming on resume).
+    # No-op on devices without panel-lut installed.
+    if [ -x /usr/local/bin/apply-panel-lut ] && [ -f /etc/panel-lut/current.lut ]; then
+      sudo /usr/local/bin/apply-panel-lut /etc/panel-lut/current.lut >/dev/null 2>&1 &
+    fi
+
     # Restart EmulationStation if needed
     if [ ! -f "/dev/shm/QBMODE" ]; then
       systemctl is-active --quiet emulationstation.service && echo ok || systemctl start emulationstation

@@ -246,6 +246,25 @@ sudo chmod 755 Arkbuild/usr/local/bin/rk3562-poweroff.sh
 sudo cp scripts/rk3562-poweroff.service Arkbuild/etc/systemd/system/rk3562-poweroff.service
 call_chroot "systemctl enable rk3562-poweroff"
 
+# RG43H Pro: warm-white panel LUT in VOP2 hardware gamma table.
+# The JC4505 panel module ships with a cool white point (~7500K+) and there
+# are no per-channel R/G/B controls in the panel's init sequence we can
+# touch. We compensate via the VOP2 hardware GAMMA_LUT — applied once at
+# boot and re-applied on resume. Zero per-frame CPU cost since the LUT
+# lives in the display controller silicon.
+if [ "$UNIT" == "rg43h" ]; then
+  sudo install -m 0755 -o root -g root scripts/apply_panel_lut.py \
+    Arkbuild/usr/local/bin/apply-panel-lut
+  sudo install -m 0755 -o root -g root scripts/make_panel_lut.py \
+    Arkbuild/usr/local/bin/make-panel-lut
+  sudo install -d -m 0755 -o root -g root Arkbuild/etc/panel-lut
+  sudo install -m 0644 -o root -g root scripts/panel-lut.rg43h.lut \
+    Arkbuild/etc/panel-lut/current.lut
+  sudo install -m 0644 -o root -g root scripts/panel-lut.service \
+    Arkbuild/etc/systemd/system/panel-lut.service
+  call_chroot "systemctl enable panel-lut"
+fi
+
 # Vulkan ICD manifest + info utility
 sudo mkdir -p Arkbuild/usr/share/vulkan/icd.d
 sudo cp BSP/vulkan/rk_vk.json Arkbuild/usr/share/vulkan/icd.d/
