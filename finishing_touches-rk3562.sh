@@ -158,9 +158,15 @@ fi
 # rockchip_wifi_power() GPIO helper, so there is no per-rev DT change.
 # (rk915 uses a platform alias and won't auto-load from SDIO enumeration
 # alone — explicit load via modules-load.d is required.)
-echo "rk915" | sudo tee -a Arkbuild/etc/modules-load.d/modules.conf
+#
+# Order matters: aic8800_bsp/aic8800_fdrv pulse the WiFi power rail and
+# assert SDIO carddetect at module init, then wait 2s for an AIC chip to
+# enumerate. On RK915 hardware that times out, and the bsp driver drops
+# the rail again on the way out. Loading aic8800 first lets that
+# pulse-and-cleanup complete before rk915 powers the rail for real.
 echo "aic8800_bsp" | sudo tee -a Arkbuild/etc/modules-load.d/modules.conf
 echo "aic8800_fdrv" | sudo tee -a Arkbuild/etc/modules-load.d/modules.conf
+echo "rk915" | sudo tee -a Arkbuild/etc/modules-load.d/modules.conf
 
 # Disable some unneeded interfaces in NetworkManager
 cat <<EOF | sudo tee -a Arkbuild/etc/NetworkManager/NetworkManager.conf
