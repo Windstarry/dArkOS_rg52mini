@@ -16,6 +16,11 @@ if  [[ $1 == "standalone" ]]; then
   fi
   echo "VAR=PPSSPPSDL" > /home/ark/.config/KILLIT
   sudo systemctl restart killer_daemon.service
+  # PPSSPP tracks instance count via shm at /dev/shm/PPSSPP_ID and refuses to
+  # save its config when not the first instance.  killer_daemon's SIGTERM kills
+  # PPSSPP before its destructor can unlink the shm, so the next launch sees a
+  # stale counter and silently drops all settings changes.  Wipe it pre-launch.
+  sudo rm -f /dev/shm/PPSSPP_ID
   cp -f /$directory/psp/ppsspp/PSP/SYSTEM/ppsspp.ini.sdl /$directory/psp/ppsspp/PSP/SYSTEM/ppsspp.ini
   xres="$(cat /sys/class/graphics/fb0/modes | grep -o -P '(?<=:).*(?=p-)' | cut -dx -f1)"
   if [ $xres -ge "1280" ]; then
@@ -51,6 +56,7 @@ elif [[ $1 == "standalone-2021" ]]; then
   export SDL_AUDIODRIVER=alsa
   echo "VAR=PPSSPPSDL" > /home/ark/.config/KILLIT
   sudo systemctl restart killer_daemon.service
+  sudo rm -f /dev/shm/PPSSPP_ID
   cp -f /$directory/psp/ppsspp/PSP/SYSTEM/ppsspp.ini.sdl /$directory/psp/ppsspp/PSP/SYSTEM/ppsspp.ini
   /opt/ppsspp-2021/PPSSPPSDL --fullscreen "$2"
   cp -f /$directory/psp/ppsspp/PSP/SYSTEM/ppsspp.ini /$directory/psp/ppsspp/PSP/SYSTEM/ppsspp.ini.sdl
