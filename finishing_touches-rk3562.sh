@@ -148,25 +148,23 @@ if [ "$UNIT" == "rg43h" ]; then
   echo "vm.swappiness=10" | sudo tee Arkbuild/etc/sysctl.d/99-swap.conf
 fi
 
-# Load WiFi kernel modules at boot.
+# Load the WiFi kernel driver matching this device's hardware revision.
 # There are two RG52 Mini hardware revisions with different WiFi chips:
 #   rev A: RK915 (Microchip WILC1000) — SDIO vendor 0x0296
 #   rev B: AIC8800DL (Aicsemi)         — SDIO vendor 0xc8a1
-# Both drivers are built as modules and loaded unconditionally. Only the
-# driver whose SDIO vendor ID matches the chip actually present binds; the
-# other stays idle. Both use the same wireless-wlan DT node and the shared
-# rockchip_wifi_power() GPIO helper, so there is no per-rev DT change.
-# (rk915 uses a platform alias and won't auto-load from SDIO enumeration
-# alone — explicit load via modules-load.d is required.)
+# RG43H/V Pro are RK915-only. Both drivers share the same wireless-wlan
+# DT node and rockchip_wifi_power() GPIO helper, so there is no per-rev
+# DT change.
 #
-# Order matters: aic8800_bsp/aic8800_fdrv pulse the WiFi power rail and
-# assert SDIO carddetect at module init, then wait 2s for an AIC chip to
-# enumerate. On RK915 hardware that times out, and the bsp driver drops
-# the rail again on the way out. Loading aic8800 first lets that
-# pulse-and-cleanup complete before rk915 powers the rail for real.
-echo "aic8800_bsp" | sudo tee -a Arkbuild/etc/modules-load.d/modules.conf
-echo "aic8800_fdrv" | sudo tee -a Arkbuild/etc/modules-load.d/modules.conf
-echo "rk915" | sudo tee -a Arkbuild/etc/modules-load.d/modules.conf
+# Loading both unconditionally doesn't work: each driver pulses
+# rockchip_wifi_power() at module init, so whichever loads second stomps
+# the first. wifi-driver-load.service tries rk915 first and falls back
+# to aic8800 if rk915 can't find its chip; both drivers clean up the
+# rail on failure so the fallback is safe.
+sudo cp scripts/wifi-driver-load.sh Arkbuild/usr/local/bin/wifi-driver-load.sh
+sudo chmod 755 Arkbuild/usr/local/bin/wifi-driver-load.sh
+sudo cp scripts/wifi-driver-load.service Arkbuild/etc/systemd/system/wifi-driver-load.service
+sudo chroot Arkbuild/ bash -c "systemctl enable wifi-driver-load"
 
 # Disable some unneeded interfaces in NetworkManager
 cat <<EOF | sudo tee -a Arkbuild/etc/NetworkManager/NetworkManager.conf
