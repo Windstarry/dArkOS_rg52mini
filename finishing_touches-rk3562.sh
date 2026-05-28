@@ -166,6 +166,12 @@ sudo chmod 755 Arkbuild/usr/local/bin/wifi-driver-load.sh
 sudo cp scripts/wifi-driver-load.service Arkbuild/etc/systemd/system/wifi-driver-load.service
 sudo chroot Arkbuild/ bash -c "systemctl enable wifi-driver-load"
 
+# Block udev SDIO-vendor auto-modprobe of aic8800 -- it races the rk915
+# retry loop's rockchip_wifi_power() cycles and stomps aic8800's firmware
+# download. wifi-driver-load.sh loads aic8800 explicitly when needed.
+sudo install -m 644 scripts/rk3562/modprobe.d/dArkOS-wifi.conf \
+    Arkbuild/etc/modprobe.d/dArkOS-wifi.conf
+
 # Disable some unneeded interfaces in NetworkManager
 cat <<EOF | sudo tee -a Arkbuild/etc/NetworkManager/NetworkManager.conf
 
@@ -211,6 +217,17 @@ if [ "$UNIT" == "rg52mini" ]; then
   sudo cp "dArkOS_Tools/rk3562/Swap Start+Select with FN+Back.sh" Arkbuild/opt/system/Advanced/
   sudo cp "dArkOS_Tools/rk3562/Swap Start+Select with FN+Back.sh" Arkbuild/usr/local/bin/
   sudo cp "dArkOS_Tools/rk3562/Restore Start+Select.sh" Arkbuild/usr/local/bin/
+fi
+# Fan toggle scripts (RG52 Mini only -- RG43H Pro chassis has no fan)
+if [ "$UNIT" == "rg52mini" ]; then
+  sudo cp "dArkOS_Tools/rk3562/Disable Fan.sh" Arkbuild/opt/system/Advanced/
+  sudo cp "dArkOS_Tools/rk3562/Disable Fan.sh" Arkbuild/usr/local/bin/
+  sudo cp "dArkOS_Tools/rk3562/Enable Fan.sh" Arkbuild/usr/local/bin/
+  sudo install -m 755 scripts/rk3562/fan-state-apply.sh \
+      Arkbuild/usr/local/bin/fan-state-apply.sh
+  sudo install -m 644 scripts/rk3562/fan-state.service \
+      Arkbuild/etc/systemd/system/fan-state.service
+  sudo chroot Arkbuild/ bash -c "systemctl enable fan-state"
 fi
 # Left stick inversion toggle (RG43H Pro / RG43V Pro -- shared DTB enables
 # inversion to match RG43H wiring; RG43V Pro left stick is wired opposite and
