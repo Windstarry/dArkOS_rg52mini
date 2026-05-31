@@ -30,10 +30,14 @@ Defaults are calibrated for the JC-TLCM4505 panel used in the AISLPC RG43H Pro:
   G: (0.287, 0.593)
   B: (0.134, 0.119)
   W: (0.299, 0.327)   ← spec typical
-Target: ~6300K = (0.3160, 0.3310) — slightly warmer than D65 (6504K, x=0.3127,
-y=0.3290) to compensate for the perceived cool shift at typical handheld
-brightness (~60% backlight). At full brightness this lands a hair warm;
-at 60% it reads as neutral white.
+Target: ~5650K = (0.3290, 0.3445) — warm white, the midpoint between D65 and
+a 5000K (D50) reference. Splits the difference between an accurate-but-cool
+neutral and the warmer 5000K some handheld builders prefer; at ~60% backlight
+this reads as a comfortable warm-neutral on this panel.
+
+White-retarget is ABSOLUTE: the panel's native white is ~7300K, so the
+neutral axis is driven with attenuated blue/green to actually shift the
+displayed white (not merely adapt-to-native, which leaves white untouched).
 
 Loaded by apply_panel_lut.py via the atomic DRM CUBIC_LUT property.
 """
@@ -156,21 +160,45 @@ def srgb_oetf(x):
 # LUT construction
 # ---------------------------------------------------------------------------
 
-def build_correction_matrix(panel_R, panel_G, panel_B, panel_W,
+def build_correction_matrix(panel_R, panel_G, panel_B, panel_W, target_W,
                              srgb_R=(0.640, 0.330),
                              srgb_G=(0.300, 0.600),
                              srgb_B=(0.150, 0.060),
                              srgb_W=(0.3127, 0.3290)):
     """
     Returns the 3×3 matrix that maps a linear sRGB triple to the linear
-    panel-RGB drive values that produce that sRGB color on the panel.
+    panel-RGB drive values that reproduce sRGB color on the panel AND
+    retarget the displayed white point to `target_W`.
+
+    Intent is ABSOLUTE white retargeting (not adapt-to-display-white): the
+    sRGB D65 white is mapped to `target_W` and then expressed in panel drive
+    values. Because the panel's native white is cooler than the target, the
+    panel's blue (and some green) drive is attenuated for the neutral axis —
+    this is what actually warms the displayed white. The matrix is then scaled
+    so the brightest channel of white = 1.0 (no clipping at the neutral axis;
+    the warm shift comes from attenuating the other channels, exactly like the
+    old empirical 1D LUT's R=1.00/G=0.95/B=0.80).
+
+    NOTE: `srgb_W` is the TRUE sRGB white (D65) and must stay D65 — the white
+    retarget is carried entirely by the D65→target_W adaptation below. Setting
+    srgb_W to the target (the previous bug) makes the CAT cancel out and pins
+    the displayed white to the panel's native point.
     """
     M_sRGB = rgb_to_xyz_matrix(*srgb_R, *srgb_G, *srgb_B, *srgb_W)
     M_panel = rgb_to_xyz_matrix(*panel_R, *panel_G, *panel_B, *panel_W)
     M_panel_inv = mat_inv(M_panel)
-    M_CAT = bradford_cat(srgb_W, panel_W)
+    # Adapt the sRGB D65 white to the desired displayed white point.
+    M_CAT = bradford_cat(srgb_W, target_W)
     # panel_lin = M_panel_inv · M_CAT · M_sRGB · srgb_lin
-    return mat_mul(M_panel_inv, mat_mul(M_CAT, M_sRGB))
+    M = mat_mul(M_panel_inv, mat_mul(M_CAT, M_sRGB))
+    # Normalize so neutral white (1,1,1) maps to max-channel = 1.0: keeps the
+    # brightest primary at full drive and realizes the warm shift by pulling
+    # the others down, rather than letting white clip.
+    white_drive = mat_vec(M, [1.0, 1.0, 1.0])
+    s = max(white_drive)
+    if s > 0:
+        M = [[v / s for v in row] for row in M]
+    return M
 
 
 def build_3d_lut(M):
@@ -243,11 +271,11 @@ def main():
     ap.add_argument('--panel-wx', type=float, default=0.299)
     ap.add_argument('--panel-wy', type=float, default=0.327)
 
-    # Target white point. Defaults nudged ~100K warmer than D65 to compensate
-    # for the perceived cool shift at typical handheld brightness; see the
+    # Target white point. Default ~5650K (midpoint of D65 and a 5000K
+    # reference) — warm-neutral on this panel at ~60% backlight; see the
     # module docstring for the rationale.
-    ap.add_argument('--target-wx', type=float, default=0.3160)
-    ap.add_argument('--target-wy', type=float, default=0.3310)
+    ap.add_argument('--target-wx', type=float, default=0.3290)
+    ap.add_argument('--target-wy', type=float, default=0.3445)
 
     ap.add_argument('--dump-matrix', action='store_true',
                     help='Print intermediate matrices for sanity checking')
@@ -268,22 +296,25 @@ def main():
     print(f"Target white = ({target_W[0]:.4f}, {target_W[1]:.4f})")
 
     M = build_correction_matrix(
-        panel_R, panel_G, panel_B, panel_W,
-        srgb_W=target_W,
+        panel_R, panel_G, panel_B, panel_W, target_W,
     )
 
     if args.dump_matrix:
+        D65 = (0.3127, 0.3290)
         M_panel = rgb_to_xyz_matrix(*panel_R, *panel_G, *panel_B, *panel_W)
         M_sRGB = rgb_to_xyz_matrix(
             0.640, 0.330, 0.300, 0.600, 0.150, 0.060,
-            target_W[0], target_W[1],
+            D65[0], D65[1],
         )
-        M_CAT = bradford_cat(target_W, panel_W)
+        M_CAT = bradford_cat(D65, target_W)
+        white_drive = mat_vec(M, [1.0, 1.0, 1.0])
         print()
-        print(fmt_mat(M_sRGB,  "M_sRGB (sRGB linear → XYZ)"))
+        print(fmt_mat(M_sRGB,  "M_sRGB (sRGB linear → XYZ, D65)"))
         print(fmt_mat(M_panel, "M_panel (panel linear → XYZ)"))
-        print(fmt_mat(M_CAT,   "M_CAT (D65 → panel white)"))
-        print(fmt_mat(M,       "M (sRGB linear → panel linear)"))
+        print(fmt_mat(M_CAT,   "M_CAT (D65 → target white)"))
+        print(fmt_mat(M,       "M (sRGB linear → panel linear, normalized)"))
+        print(f"white (1,1,1) → panel drive "
+              f"R={white_drive[0]:.4f} G={white_drive[1]:.4f} B={white_drive[2]:.4f}")
         print()
 
     data = build_3d_lut(M)
