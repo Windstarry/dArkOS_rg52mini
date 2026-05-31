@@ -5,10 +5,16 @@ RG56PRO: 1280x720 (portrait, rotated via SDL2 RGA)
 RG43H:   1024x768 (landscape native)
 
 Both use the rk3562-joystick driver which has different joydev button
-indices from the retrogame_joypad (RG503).  The key differences:
+indices from the retrogame_joypad (RG503).
 
-  retrogame_joypad (RG503):  dpad 13-16, start b9, back b8, L2 b6, R2 b7
-  rk3562-joystick:           dpad 12-15, start b8, back b7, L2/R2 analog only
+  rk3562-joystick joydev button indices (verified on-device with evtest,
+  RetroArch/SDL udev numbering = ascending evdev-code order):
+    b0=B(south)  b1=A(east)  b2=X(north)  b3=Y(west)
+    b4=L1(TL)    b5=R1(TR)   b6=L2(TL2)   b7=R2(TR2)
+    b8=SELECT    b9=START    b10=GUIDE(MODE)
+    b11=L3(THUMBL) b12=R3(THUMBR)
+    b13=DPadUp   b14=DPadDown b15=DPadLeft b16=DPadRight  b17=HAPPY1
+  L2/R2 analog are on hat2 (h2down/h2right); no secondary page key.
 """
 
 # --- Patch src/def.h ---
@@ -26,29 +32,29 @@ defh = defh.replace(
 # Step 2: Fix BUTTON section — insert proper rk3562 button block and
 # revert the combined guard back to RG503-only for that section.
 #
-# rk3562-joystick joydev button indices:
+# rk3562-joystick joydev button indices (verified on-device with evtest):
 #   b0=B(south) b1=A(east) b2=X(north) b3=Y(west)
-#   b4=L1 b5=R1 b6=BACK(TL2) b7=SELECT b8=START b9=HOME/FN(MODE)
-#   b10=L3 b11=R3 b12=DPadUp b13=DPadDown b14=DPadLeft b15=DPadRight
+#   b4=L1 b5=R1 b6=L2(TL2) b7=R2(TR2) b8=SELECT b9=START b10=GUIDE(MODE)
+#   b11=L3 b12=R3 b13=DPadUp b14=DPadDown b15=DPadLeft b16=DPadRight
 #
-# L2/R2 are analog axes (a2/a5), not buttons — no secondary page key.
+# L2/R2 analog are on hat2 (h2down/h2right) — no secondary page key.
 
 rk3562_button_block = """\
 #elif defined(DEVICE_RG56PRO) || defined(DEVICE_RG43H)
-   #define BUTTON_PRESSED_UP              event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 12
-   #define BUTTON_PRESSED_DOWN            event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 13
-   #define BUTTON_PRESSED_LEFT            event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 14
-   #define BUTTON_PRESSED_RIGHT           event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 15
+   #define BUTTON_PRESSED_UP              event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 13
+   #define BUTTON_PRESSED_DOWN            event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 14
+   #define BUTTON_PRESSED_LEFT            event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 15
+   #define BUTTON_PRESSED_RIGHT           event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 16
    #define BUTTON_PRESSED_PAGEUP          event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 4
    #define BUTTON_PRESSED_PAGEDOWN        event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 5
    #define BUTTON_PRESSED_VALIDATE        event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 1
    #define BUTTON_PRESSED_BACK            event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 0
    #define BUTTON_PRESSED_MENU_CONTEXT    event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 2
    #define BUTTON_PRESSED_SELECT          event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 3
-   #define BUTTON_HELD_UP                 SDL_JoystickGetButton(g_joystick, 12)
-   #define BUTTON_HELD_DOWN               SDL_JoystickGetButton(g_joystick, 13)
-   #define BUTTON_HELD_LEFT               SDL_JoystickGetButton(g_joystick, 14)
-   #define BUTTON_HELD_RIGHT              SDL_JoystickGetButton(g_joystick, 15)
+   #define BUTTON_HELD_UP                 SDL_JoystickGetButton(g_joystick, 13)
+   #define BUTTON_HELD_DOWN               SDL_JoystickGetButton(g_joystick, 14)
+   #define BUTTON_HELD_LEFT               SDL_JoystickGetButton(g_joystick, 15)
+   #define BUTTON_HELD_RIGHT              SDL_JoystickGetButton(g_joystick, 16)
    #define BUTTON_HELD_PAGEUP             SDL_JoystickGetButton(g_joystick, 4)
    #define BUTTON_HELD_PAGEDOWN           SDL_JoystickGetButton(g_joystick, 5)
    #define BUTTON_HELD_SELECT             SDL_JoystickGetButton(g_joystick, 3)
