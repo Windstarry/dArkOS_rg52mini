@@ -64,7 +64,18 @@ else
 	  Arkbuild/usr/lib/aarch64-linux-gnu/libavfilter* \
 	  Arkbuild/usr/lib/aarch64-linux-gnu/libswscale* \
 	  Arkbuild/usr/lib/aarch64-linux-gnu/libswresample* \
-	  Arkbuild/usr/lib/aarch64-linux-gnu/libpostproc*
+	  Arkbuild/usr/lib/aarch64-linux-gnu/libpostproc* \
+	  Arkbuild/usr/lib/aarch64-linux-gnu/pkgconfig/libav*.pc \
+	  Arkbuild/usr/lib/aarch64-linux-gnu/pkgconfig/libsw*.pc \
+	  Arkbuild/usr/lib/aarch64-linux-gnu/pkgconfig/libpostproc*.pc \
+	  Arkbuild/usr/include/libavutil \
+	  Arkbuild/usr/include/libavcodec \
+	  Arkbuild/usr/include/libavformat \
+	  Arkbuild/usr/include/libavdevice \
+	  Arkbuild/usr/include/libavfilter \
+	  Arkbuild/usr/include/libswscale \
+	  Arkbuild/usr/include/libswresample \
+	  Arkbuild/usr/include/libpostproc
 fi
 
 # udev rules to allow the `video` group access to the MPP service, RGA, and

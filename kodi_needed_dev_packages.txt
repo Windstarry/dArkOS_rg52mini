@@ -8,10 +8,11 @@ libasound2-dev
 libass-dev
 libavahi-client-dev
 libavahi-common-dev
-libavcodec-dev
-libavfilter-dev
-libavformat-dev
-libavutil-dev
+# ffmpeg dev (libav*/libsw*/libpostproc) intentionally NOT listed here.
+# Installing Debian's ffmpeg -dev packages overwrites the headers/.pc/.so of
+# the rkmpp ffmpeg-rockchip build (build_ffmpeg.sh), making Kodi link Debian's
+# software-decode ffmpeg. ffmpeg-rockchip installs its own headers + pkgconfig
+# into /usr, which Kodi's FFMPEG_PATH=/usr picks up for hardware decode.
 libbluetooth-dev
 libbluray-dev
 libbz2-dev
@@ -67,7 +68,6 @@ libogg-dev
 libplist-2.0-4
 libplist-dev
 libpng-dev
-libpostproc-dev
 libpulse-dev
 libp8-platform-dev
 libshairplay0
@@ -78,8 +78,6 @@ libspdlog1.15
 libspdlog-dev
 libsqlite3-dev
 libssl-dev
-libswscale-dev
-libswresample-dev
 libtag2
 libtag-dev
 libtiff5-dev
