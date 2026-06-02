@@ -365,6 +365,22 @@ index fac914d..ca7acdb 100644
    m_eglContext.DestroySurface();
  
    CLog::Log(LOGDEBUG, "CWinSystemGbmEGLContext::{} - deinitialized GBM", __FUNCTION__);
+diff --git a/xbmc/windowing/gbm/drm/CMakeLists.txt b/xbmc/windowing/gbm/drm/CMakeLists.txt
+index 8bd07ea..45fe4fb 100644
+--- a/xbmc/windowing/gbm/drm/CMakeLists.txt
++++ b/xbmc/windowing/gbm/drm/CMakeLists.txt
+@@ -19,3 +19,11 @@ set(HEADERS DRMAtomic.h
+             OffScreenModeSetting.h)
+ 
+ core_add_library(windowing_gbm_drm)
++
++# dArkOS RK3562 (RG52 Mini): DRMUtils.cpp / DRMAtomic.cpp read m_rotate and swap
++# the reported resolution under #ifdef KODI_GBM_ROTATE. They compile into this
++# separate library target, so the define must be applied here too — the one on
++# the parent windowing_gbm target does not propagate. Mirrors gbm/CMakeLists.txt.
++if(KODI_GBM_ROTATE)
++  target_compile_definitions(${CORE_LIBRARY} PRIVATE KODI_GBM_ROTATE=${KODI_GBM_ROTATE})
++endif()
 diff --git a/xbmc/windowing/gbm/drm/DRMAtomic.cpp b/xbmc/windowing/gbm/drm/DRMAtomic.cpp
 index 70ae92e..7493db1 100644
 --- a/xbmc/windowing/gbm/drm/DRMAtomic.cpp
