@@ -139,6 +139,14 @@ sudo cp -R kodi/userdata/ Arkbuild/opt/kodi/
 sudo cp kodi/scripts/Kodi.sh Arkbuild/usr/local/bin/
 sudo chmod 777 Arkbuild/usr/local/bin/Kodi.sh
 
+# oga_controls translates the gamepad to keyboard input for Kodi navigation. It
+# reads its key map from oga_controls_settings.txt relative to its working
+# directory, which Kodi.sh sets to /opt/kodi. Without this file EVERY button
+# defaults to KEY_RIGHTALT (see oga_controls main.c) and nothing navigates, so
+# install the Kodi-nav key map there. (The device path is fixed separately in
+# build_ogacontrols.sh, where the rg503 profile is repointed at play_joystick.)
+sudo cp kodi/oga_controls_settings.txt Arkbuild/opt/kodi/
+
 # RG52 Mini only: route hardware-decoded video through the GL renderer instead of
 # a dedicated overlay plane, so it rides the same RGA GUI rotation. dArkOS ships
 # videoplayer.useprimerenderer forced to 0 ("Direct To Plane"); set it to 1 ("EGL")
