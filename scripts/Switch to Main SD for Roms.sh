@@ -55,7 +55,7 @@ status=$?
   sed -i '/roms2/s//roms/g'  /home/ark/.config/retroarch/config/Atari800/retroarch_5200.cfg
   sed -i '/roms2/s//roms/g'  /home/ark/.config/retroarch/config/Atari800/retroarch_A800.cfg
   sed -i '/roms2/s//roms/g'  /home/ark/.config/retroarch/config/Atari800/retroarch_XEGS.cfg
-  sed -i '/roms2/s//roms/g'  /home/ark/.config/duckstation/settings.ini
+  sed -i '/roms2/s//roms/g'  /home/ark/.local/share/duckstation/settings.ini
   sed -i '/roms2/s//roms/g'  /home/ark/.config/mupen64plus/mupen64plus.cfg
   sed -i '/roms2\/bios/s//roms\/bios/g' /opt/amiberry/conf/amiberry.conf
   sed -i '/roms2\//s//roms\//g' /home/ark/.config/scummvm/scummvm.ini

@@ -92,7 +92,7 @@ then
   sed -i '/roms\//s//roms2\//g'  /home/ark/.config/retroarch/config/Atari800/retroarch_A800.cfg
   sed -i '/roms\//s//roms2\//g'  /home/ark/.config/retroarch/config/Atari800/retroarch_XEGS.cfg
   sed -i '/roms\//s//roms2\//g'  /home/ark/.config/mupen64plus/mupen64plus.cfg
-  sed -i '/roms\//s//roms2\//g'  /home/ark/.config/duckstation/settings.ini
+  sed -i '/roms\//s//roms2\//g'  /home/ark/.local/share/duckstation/settings.ini
   sed -i '/roms\/bios/s//roms2\/bios/g' /opt/amiberry/conf/amiberry.conf
   sed -i '/.\/351Files 2/s//.\/351Files-sd2 2/g' /opt/system/351Files.sh
   sudo sed -i '/roms\//s//roms2\//g' /usr/local/bin/scummvm.sh

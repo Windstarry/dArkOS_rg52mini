@@ -32,7 +32,7 @@ PatchFastBoot = false
 
 
 [GPU]
-Renderer = OpenGL
+Renderer = Vulkan
 Adapter = 
 ResolutionScale = 1
 Multisamples = 1
@@ -61,6 +61,7 @@ PGXPDepthClearThreshold = 300.000000
 
 
 [Display]
+Rotation = Rotate90
 CropMode = Overscan
 ActiveStartOffset = 0
 ActiveEndOffset = 0
