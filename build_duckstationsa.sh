@@ -22,6 +22,11 @@ sudo mkdir -p Arkbuild/home/ark/.local/share/duckstation
 sudo cp "${DUCKSTATION_APPIMAGE}" Arkbuild/opt/duckstation/duckstationsa
 sudo cp duckstation/scripts/standalone-duckstation Arkbuild/usr/local/bin/
 sudo cp duckstation/configs/settings.ini.${UNIT} Arkbuild/home/ark/.local/share/duckstation/settings.ini
+# Install our controller DB to DuckStation's data root (EmuFolders::DataRoot,
+# read in preference to the AppImage's bundled gamecontrollerdb.txt) so SDL3
+# recognizes the built-in rk3562-joystick as a gamepad. vendor/product=0 means
+# SDL derives a name-based GUID; the matching entry is in inttools/gamecontrollerdb.txt.
+sudo cp inttools/gamecontrollerdb.txt Arkbuild/home/ark/.local/share/duckstation/gamecontrollerdb.txt
 call_chroot "chown -R ark:ark /opt/"
 call_chroot "chown -R ark:ark /home/ark/"
 sudo chmod 777 Arkbuild/opt/duckstation/duckstationsa

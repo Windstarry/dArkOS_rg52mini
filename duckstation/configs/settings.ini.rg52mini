@@ -34,7 +34,7 @@ PatchFastBoot = false
 [GPU]
 Renderer = Vulkan
 Adapter = 
-ResolutionScale = 1
+ResolutionScale = 3
 Multisamples = 1
 UseDebugDevice = false
 PerSampleShading = false
@@ -87,6 +87,10 @@ MaxFPS = 0.000000
 
 
 [Hotkeys]
+OpenPauseMenu = SDL-0/Guide
+LoadSelectedSaveState = SDL-0/Misc1 & SDL-0/LeftShoulder
+SaveSelectedSaveState = SDL-0/Misc1 & SDL-0/RightShoulder
+FastForward = SDL-0/Misc1 & SDL-0/+LeftTrigger
 
 
 [Logging]
@@ -98,29 +102,22 @@ LogToWindow = false
 LogToFile = false
 
 
-[Controller1]
+[Pad1]
 Type = DigitalController
-ButtonUp = Controller0/Button11
-ButtonDown = Controller0/Button12
-ButtonLeft = Controller0/Button13
-ButtonRight = Controller0/Button14
-ButtonSelect = Controller0/Button4
-ButtonStart = Controller0/Button6
-ButtonTriangle = Controller0/Button2
-ButtonCross = Controller0/Button1
-ButtonSquare = Controller0/Button3
-ButtonCircle = Controller0/Button0
-ButtonL1 = Controller0/Button9
-ButtonL2 = Controller0/+Axis4
-ButtonR1 = Controller0/Button10
-ButtonR2 = Controller0/+Axis5
-AxisLeftX = Controller0/Axis0
-AxisLeftY = Controller0/Axis1
-ButtonL3 = Controller0/Button7
-ButtonR3 = Controller0/Button8
-AxisRightX = Controller0/Axis2
-AxisRightY = Controller0/Axis3
-AnalogDPadInDigitalMode = false
+Up = SDL-0/DPadUp
+Down = SDL-0/DPadDown
+Left = SDL-0/DPadLeft
+Right = SDL-0/DPadRight
+Select = SDL-0/Back
+Start = SDL-0/Start
+Triangle = SDL-0/Y
+Cross = SDL-0/A
+Square = SDL-0/X
+Circle = SDL-0/B
+L1 = SDL-0/LeftShoulder
+R1 = SDL-0/RightShoulder
+L2 = SDL-0/+LeftTrigger
+R2 = SDL-0/+RightTrigger
 
 
 [GameList]
