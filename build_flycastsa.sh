@@ -1,8 +1,10 @@
 #!/bin/bash
 
 # Build and install flycast standalone emulator
-# Cache key: SHA of scripts/flycastsa.sh in our rk3562_core_builds submodule.
-FLYCASTSA_RECIPE_SHA=$(git -C rk3562_core_builds ls-tree HEAD scripts/flycastsa.sh 2>/dev/null | awk '{print $3}')
+# Cache key: hash of the flycastsa recipe AND its patches (which the recipe copies
+# from the working tree). Keying on the recipe alone would miss patch-only changes
+# (e.g. the rg52mini 270-degree rotation patch) and silently reuse a stale build.
+FLYCASTSA_RECIPE_SHA=$(cat rk3562_core_builds/scripts/flycastsa.sh rk3562_core_builds/patches/flycastsa-patch* 2>/dev/null | sha1sum | awk '{print $1}')
 if [ -f "Arkbuild_package_cache/${CHIPSET}/flycastsa.tar.gz" ] && \
    [ "$(cat Arkbuild_package_cache/${CHIPSET}/flycastsa.commit 2>/dev/null)" == "${FLYCASTSA_RECIPE_SHA}" ]; then
     sudo tar -xvzpf Arkbuild_package_cache/${CHIPSET}/flycastsa.tar.gz
@@ -26,6 +28,17 @@ fi
 
 sudo mkdir -p Arkbuild/home/ark/.config/flycast
 sudo cp flycast/config/emu.cfg Arkbuild/home/ark/.config/flycast/
+
+# RG52 Mini portrait panel: run flycast in Vulkan and rotate with flycast's own
+# renderer (rend.Rotate90). SDL2's RGA rotation only covers the GL swap path and
+# explicitly skips Vulkan windows, so Vulkan flycast would otherwise be unrotated.
+# Landscape devices (rg43h) and other chipsets keep the GL default (pvr.rend=0,
+# Rotate90=no) where SDL2 handles rotation.
+if [ "$UNIT" == "rg52mini" ]; then
+  sudo sed -i 's/^pvr.rend = .*/pvr.rend = 4/'            Arkbuild/home/ark/.config/flycast/emu.cfg
+  sudo sed -i 's/^rend.Rotate90 = .*/rend.Rotate90 = yes/' Arkbuild/home/ark/.config/flycast/emu.cfg
+fi
+
 call_chroot "chown -R ark:ark /opt/"
 call_chroot "chown -R ark:ark /home/ark/.config/flycast/"
 sudo chmod 777 Arkbuild/opt/flycastsa/flycast
