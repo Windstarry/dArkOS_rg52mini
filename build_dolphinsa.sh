@@ -28,6 +28,13 @@ if [ ! -f "Arkbuild/opt/dolphin/dolphin-emu-nogui" ]; then
 	echo "${DOLPHINSA_RECIPE_SHA}" | sudo tee Arkbuild_package_cache/${CHIPSET}/dolphinsa.commit > /dev/null
 fi
 sudo cp -R dolphin/Config/ Arkbuild/home/ark/.local/share/dolphin-emu/
+# rk3562 devices have a different built-in gamepad (evdev name "rk3562-joystick", not the
+# rk3566 "retrogame_joypad"), so the shared GCPadNew.ini binds to nothing -> no input.
+# Ship a chipset-specific GCPadNew.ini (correct Device name; GC Z on the R2 trigger axis
+# since our R2 is an axis, not a button). Same pad on all rk3562 units, so keyed on CHIPSET.
+if [ -f "dolphin/configs/${CHIPSET}/GCPadNew.ini" ]; then
+  sudo cp dolphin/configs/${CHIPSET}/GCPadNew.ini Arkbuild/home/ark/.local/share/dolphin-emu/Config/GCPadNew.ini
+fi
 sudo cp dolphin/scripts/dolphin.sh Arkbuild/usr/local/bin/
 call_chroot "chown -R ark:ark /opt/"
 call_chroot "chown -R ark:ark /home/ark/"
