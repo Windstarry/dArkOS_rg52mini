@@ -488,6 +488,18 @@ while read GAME_SYSTEM; do
   fi
 done <game_systems.txt
 
+# Capable-device-only systems kept out of the shared game_systems.txt so weak
+# rk3326 builds don't advertise them (upstream christianhaitian/dArkOS@5e1516a
+# does this for rk3566).  RK3562 is binary-compatible with and as capable as
+# rk3566, so create them here.  gc (Dolphin/GameCube) is the one we actually
+# want; cdimono1/tigerlcd are still in game_systems.txt for us but listed here
+# too for parity (mkdir -p is idempotent).
+for extra_dir in cdimono1 gc tigerlcd
+do
+  echo -e "Creating ${fat32_mountpoint}/${extra_dir}\n"
+  sudo mkdir -p ${fat32_mountpoint}/${extra_dir}
+done
+
 # PS2 emulation (pcsx2-sdl) needs specific subdirs visible on the ROMs
 # partition before first launch, so users can drop BIOS files via SMB / USB
 # without having to launch a game first to trigger the launcher's mkdir -p.
