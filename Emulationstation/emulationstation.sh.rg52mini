@@ -139,7 +139,11 @@ else
     esdir="$(dirname $0)"
     while true; do
         rm -f /tmp/es-restart /tmp/es-sysrestart /tmp/es-shutdown
-        LD_LIBRARY_PATH=/opt/emulationstation/lib "$esdir/emulationstation" "$@"
+        # g13p0 Mali (for ES's GLES 1.0 loading screen) is resolved via the binary's
+        # RUNPATH (set with patchelf at build time), not LD_LIBRARY_PATH. Using the env
+        # var here would leak /opt/emulationstation/lib into every emulator ES spawns,
+        # shadowing the system g24p0 Mali. RUNPATH stays local to this process.
+        "$esdir/emulationstation" "$@"
         ret=$?
         [ -f /tmp/es-restart ] && continue
         if [ -f /tmp/es-sysrestart ]; then

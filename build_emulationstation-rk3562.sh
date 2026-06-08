@@ -39,6 +39,18 @@ else
     sudo tar -czpf Arkbuild_package_cache/${CHIPSET}/emulationstation.tar.gz Arkbuild/usr/bin/emulationstation/
     sudo git --git-dir=Arkbuild/home/ark/EmulationStation-fcamod/.git --work-tree=Arkbuild/home/ark/EmulationStation-fcamod rev-parse HEAD > Arkbuild_package_cache/${CHIPSET}/emulationstation.commit
 fi
+
+# RK3562: bake the g13p0 Mali path into the ES binary's RUNPATH instead of setting
+# LD_LIBRARY_PATH=/opt/emulationstation/lib in the launcher. The launcher prefix
+# leaks into every emulator ES spawns (children inherit ES's environment), shadowing
+# the system g24p0 Mali with g13p0 for GLES/EGL/GBM (RetroArch, standalone emulators).
+# RUNPATH is a per-binary ELF attribute that resolves ES's own libEGL/libGLESv2 to
+# g13p0 but is NOT inherited by child processes. Idempotent, so safe on cache hits too.
+if [ "$CHIPSET" == "rk3562" ]; then
+  sudo patchelf --set-rpath '/opt/emulationstation/lib' Arkbuild/usr/bin/emulationstation/emulationstation
+  verify_action
+fi
+
 sudo rm -rf Arkbuild/home/ark/EmulationStation-fcamod
 sudo mkdir -p Arkbuild/etc/emulationstation/themes
 
