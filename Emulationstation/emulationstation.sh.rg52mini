@@ -140,9 +140,11 @@ else
     while true; do
         rm -f /tmp/es-restart /tmp/es-sysrestart /tmp/es-shutdown
         # g13p0 Mali (for ES's GLES 1.0 loading screen) is resolved via the binary's
-        # RUNPATH (set with patchelf at build time), not LD_LIBRARY_PATH. Using the env
-        # var here would leak /opt/emulationstation/lib into every emulator ES spawns,
-        # shadowing the system g24p0 Mali. RUNPATH stays local to this process.
+        # DT_RPATH (set with patchelf --force-rpath at build time), not LD_LIBRARY_PATH.
+        # Using the env var here would leak /opt/emulationstation/lib into every emulator
+        # ES spawns, shadowing the system g24p0 Mali. DT_RPATH is transitive within this
+        # process (so SDL2's libgbm/libwayland-egl also resolve to g13p0) but, being an
+        # ELF attribute rather than an env var, does not leak into child executables.
         "$esdir/emulationstation" "$@"
         ret=$?
         [ -f /tmp/es-restart ] && continue
