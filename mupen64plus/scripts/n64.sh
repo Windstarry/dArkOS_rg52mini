@@ -1,11 +1,18 @@
 #!/bin/bash
 
-if ! compgen -G "/boot/rk3326-odroidgo*"; then
-  xres="$(cat /sys/class/graphics/fb0/modes | grep -o -P '(?<=:).*(?=p-)' | cut -dx -f1)"
-  yres="$(cat /sys/class/graphics/fb0/modes | grep -o -P '(?<=:).*(?=p-)' | cut -dx -f2)"
-else
+# Portrait panels mounted sideways and rotated to landscape report their native
+# (portrait) mode in fb0/modes, but the GL stack scans out the swapped (landscape)
+# resolution. mupen reads fb0 directly, so its WxH must be swapped for them:
+#   - rk3326 OdroidGo family (detected by their /boot DTB)
+#   - RG52 Mini (rk3562, landscape via SDL2 RGA rotation)
+# RG43H/V Pro are landscape-native (rk3562) and must NOT swap.
+device="$(cat /home/ark/.config/.DEVICE 2>/dev/null | tr -d '\0')"
+if compgen -G "/boot/rk3326-odroidgo*" > /dev/null || [ "$device" == "RG52MINI" ]; then
   xres="$(cat /sys/class/graphics/fb0/modes | grep -o -P '(?<=:).*(?=p-)' | cut -dx -f2)"
   yres="$(cat /sys/class/graphics/fb0/modes | grep -o -P '(?<=:).*(?=p-)' | cut -dx -f1)"
+else
+  xres="$(cat /sys/class/graphics/fb0/modes | grep -o -P '(?<=:).*(?=p-)' | cut -dx -f1)"
+  yres="$(cat /sys/class/graphics/fb0/modes | grep -o -P '(?<=:).*(?=p-)' | cut -dx -f2)"
 fi
 
 if [ "$#" -gt 2 ]; then
