@@ -52,6 +52,7 @@ sudo cp -R ppsspp/configs/backupforromsfolder/ppsspp/PSP/SYSTEM/ppsspp.ini.go.${
 sudo cp -R ppsspp/configs/backupforromsfolder/ppsspp/PSP/SYSTEM/ppsspp.ini.sdl.${UNIT} Arkbuild/opt/ppsspp/backupforromsfolder/ppsspp/PSP/SYSTEM/ppsspp.ini.sdl
 sudo cp ppsspp/controls.ini.${UNIT} Arkbuild/opt/ppsspp/backupforromsfolder/ppsspp/PSP/SYSTEM/controls.ini
 sudo cp ppsspp/ppsspp.ini.${UNIT} Arkbuild/opt/ppsspp/backupforromsfolder/ppsspp/PSP/SYSTEM/ppsspp.ini
+sudo cp ppsspp/configs/backupforromsfolder/ppsspp/PSP/SYSTEM/*_ppsspp.ini Arkbuild/opt/ppsspp/backupforromsfolder/ppsspp/PSP/SYSTEM/
 call_chroot "chown -R ark:ark /opt/"
 sudo chmod 777 Arkbuild/opt/ppsspp/PPSSPPSDL
 sudo chmod 777 Arkbuild/usr/local/bin/ppsspp.sh

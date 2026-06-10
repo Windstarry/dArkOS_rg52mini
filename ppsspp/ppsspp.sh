@@ -4,6 +4,16 @@ directory=$(dirname "$2" | cut -d "/" -f2)
 
 ln -sf /$directory/psp/ppsspp/ /home/ark/.config/
 
+# Seed any new per-game configs (e.g. UCUS98653_ppsspp.ini) onto cards that
+# already have a ppsspp folder, without overwriting user-modified ones.
+if [[ -d "/$directory/psp/ppsspp/PSP/SYSTEM" ]]; then
+  for f in /opt/ppsspp/backupforromsfolder/ppsspp/PSP/SYSTEM/*_ppsspp.ini; do
+    if [[ -f "$f" ]] && [[ ! -f "/$directory/psp/ppsspp/PSP/SYSTEM/${f##*/}" ]]; then
+      cp "$f" "/$directory/psp/ppsspp/PSP/SYSTEM/"
+    fi
+  done
+fi
+
 if  [[ $1 == "standalone" ]]; then
   if  [[ ! -d "/$directory/psp/ppsspp" ]]; then
     cp -rf /opt/ppsspp/backupforromsfolder/ppsspp /$directory/psp
