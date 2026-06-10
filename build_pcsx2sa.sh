@@ -45,9 +45,14 @@ CACHE_KEY="${PCSX2_SHA}_${SDL3_SHA}_${UNIT}"
 if [ -f "Arkbuild_package_cache/${CHIPSET}/pcsx2sa_${UNIT}.tar.gz" ] && \
    [ "$(cat Arkbuild_package_cache/${CHIPSET}/pcsx2sa_${UNIT}.commit 2>/dev/null)" == "${CACHE_KEY}" ]; then
     sudo tar -xvzpf "Arkbuild_package_cache/${CHIPSET}/pcsx2sa_${UNIT}.tar.gz"
-    if [ ! -f "Arkbuild/opt/pcsx2/bin/pcsx2-sdl" ]; then
+    # Tarballs from before the plutovg/plutosvg bundling lack the libs in
+    # /opt/pcsx2/lib (they only existed in the chroot's /usr/local/lib, which
+    # isn't cached) — treat those as incomplete too.
+    if [ ! -f "Arkbuild/opt/pcsx2/bin/pcsx2-sdl" ] || \
+       ! ls Arkbuild/opt/pcsx2/lib/libplutosvg.so* >/dev/null 2>&1; then
         echo "WARNING: pcsx2sa cache tarball is incomplete, rebuilding from source..."
         sudo rm -f "Arkbuild_package_cache/${CHIPSET}/pcsx2sa_${UNIT}.tar.gz"
+        sudo rm -rf Arkbuild/opt/pcsx2
     fi
 fi
 
@@ -133,6 +138,7 @@ if [ ! -f "Arkbuild/opt/pcsx2/bin/pcsx2-sdl" ]; then
         mkdir -p /opt/pcsx2/share/PCSX2 &&
         cp -a /home/ark/pcsx2/bin/resources /opt/pcsx2/share/PCSX2/ &&
         mkdir -p /opt/pcsx2/lib &&
+        cp -av /usr/local/lib/libplutovg.so* /usr/local/lib/libplutosvg.so* /opt/pcsx2/lib/ &&
         ln -sf /usr/lib/aarch64-linux-gnu/libshaderc.so.1 /opt/pcsx2/lib/libshaderc_shared.so.1
     "
     verify_action
