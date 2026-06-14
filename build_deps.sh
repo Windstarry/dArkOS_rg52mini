@@ -64,7 +64,8 @@ do
   fi
   sudo mkdir -p Arkbuild/usr/lib/${ARCHITECTURE}/
 
-  # For BSP Mali (rk3562), 32-bit armhf still uses g13p0 from core_builds
+  # 64-bit uses g29p1 (BSP); 32-bit armhf stays on g13p0 from core_builds — the
+  # 32-bit g29p1 blob SIGSEGVs inside libmali during GL/shader setup (SEGV_ACCERR).
   if [ "${whichmali_bsp}" == "true" ] && [ "$FOLDER" == "armhf" ]; then
     MALI_BLOB=libmali-bifrost-g52-g13p0-gbm.so
   else
@@ -73,8 +74,8 @@ do
 
   # Install Mali blob
   if [ "${whichmali_bsp}" == "true" ] && [ "$FOLDER" == "aarch64" ]; then
-    # RK3562 64-bit: extract g24p0 from BSP tarball (GLES + Vulkan 1.3)
-    echo "Installing BSP Mali g24p0 (${whichmali}) from BSP/mali.tar.gz..."
+    # RK3562 64-bit: extract g29p1 from BSP tarball (GLES + EGL + gbm + CL + Vulkan ICD)
+    echo "Installing BSP Mali g29p1 (${whichmali}) from BSP/mali.tar.gz..."
     tar xzf BSP/mali.tar.gz -C /tmp mali/${whichmali}
     sudo cp /tmp/mali/${whichmali} Arkbuild/usr/lib/${ARCHITECTURE}/
     rm -f /tmp/mali/${whichmali}
@@ -117,25 +118,9 @@ do
 done
 sudo chroot Arkbuild/ ldconfig
 
-# Bundle g13p0 Mali for EmulationStation (rk3562 only)
-# g24p0 has broken GLES 1.0 glDrawArrays — ES uses GLES 1.0 for its loading screen.
-# ES gets g13p0 via LD_LIBRARY_PATH (g24p0 has broken GLES 1.0 glDrawArrays).
-if [ "$CHIPSET" == "rk3562" ]; then
-  sudo mkdir -p Arkbuild/opt/emulationstation/lib
-  wget -t 3 -T 60 --no-check-certificate -O libmali-bifrost-g52-g13p0-gbm.so \
-    https://github.com/christianhaitian/rk3566_core_builds/raw/refs/heads/master/mali/aarch64/libmali-bifrost-g52-g13p0-gbm.so \
-    || { echo "FATAL: Failed to download g13p0 Mali for ES"; exit 1; }
-  sudo mv libmali-bifrost-g52-g13p0-gbm.so Arkbuild/opt/emulationstation/lib/libmali.so
-  # Create symlinks for all Mali-provided libraries so LD_LIBRARY_PATH works
-  (
-    cd Arkbuild/opt/emulationstation/lib
-    for LIB in libEGL.so libEGL.so.1 libGLES_CM.so libGLES_CM.so.1 \
-               libGLESv1_CM.so libGLESv1_CM.so.1 libGLESv2.so libGLESv2.so.2 \
-               libgbm.so libgbm.so.1 libmali.so.1; do
-      sudo ln -sf libmali.so ${LIB}
-    done
-  )
-fi
+# EmulationStation uses the system Mali (g29p1) like every other app — g29p1's
+# GLES 1.0 glDrawArrays works, so the old g24p0+g13p0 dual-blob hack (a separate
+# g13p0 at /opt/emulationstation/lib reached via the ES binary's DT_RPATH) is gone.
 
 # Install proprietary Rockchip Vulkan loader (rk3562 only)
 # No system vulkan-headers needed — PPSSPP bundles its own in ext/vulkan/.

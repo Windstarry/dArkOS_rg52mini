@@ -53,7 +53,7 @@ if [ ! -d "${BSP_PATH}/mali32" ] && [ -f "${BSP_PATH}/mali32.tar.gz" ]; then
 fi
 
 # Verify required BSP components
-# Mali GPU blob is downloaded by build_deps.sh (g13p0 from rk3566_core_builds)
+# Mali GPU blob (g29p1) is installed by build_deps.sh from BSP/mali*.tar.gz
 # Only the DTB and firmware are required from BSP
 
 # Ensure kernel .config exists
@@ -113,9 +113,8 @@ if [ -d "${BSP_PATH}/firmware" ]; then
     sudo cp -rL ${BSP_PATH}/firmware/* Arkbuild/lib/firmware/ 2>/dev/null || true
 fi
 
-# Mali GPU libraries are downloaded and installed by build_deps.sh (same as RK3566).
-# The RK3562 uses g13p0 (set in utils.sh) — the BSP g24p0 has a broken GLES 1.0.
-# Install libmali-hook from BSP if available.
+# Mali GPU libraries are installed by build_deps.sh (g29p1 64-bit from BSP, g13p0
+# 32-bit from core_builds). Install the 64-bit libmali-hook from BSP if available.
 sudo mkdir -p Arkbuild/usr/lib/aarch64-linux-gnu/
 sudo cp ${BSP_PATH}/mali/libmali-hook.so.1.9.0 Arkbuild/usr/lib/aarch64-linux-gnu/ 2>/dev/null || true
 (

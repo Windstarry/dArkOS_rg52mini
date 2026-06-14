@@ -40,24 +40,9 @@ else
     sudo git --git-dir=Arkbuild/home/ark/EmulationStation-fcamod/.git --work-tree=Arkbuild/home/ark/EmulationStation-fcamod rev-parse HEAD > Arkbuild_package_cache/${CHIPSET}/emulationstation.commit
 fi
 
-# RK3562: bake the g13p0 Mali path into the ES binary's RPATH instead of setting
-# LD_LIBRARY_PATH=/opt/emulationstation/lib in the launcher. The launcher prefix
-# leaks into every emulator ES spawns (children inherit ES's environment), shadowing
-# the system g24p0 Mali with g13p0 for GLES/EGL/GBM (RetroArch, standalone emulators).
-# An ELF rpath is NOT inherited by child processes, so it fixes the leak.
-#
-# It MUST be DT_RPATH (--force-rpath), NOT DT_RUNPATH (plain --set-rpath). DT_RUNPATH
-# is non-transitive: it would resolve only ES's own NEEDED libmali.so.1 to g13p0, while
-# SDL2's NEEDED libgbm.so.1 / libwayland-egl.so.1 and the SDL_VIDEO_EGL_DRIVER dlopen
-# of libEGL.so would still resolve to the system g24p0. That loads TWO Mali DDKs in one
-# process (g13p0 + g24p0) and ES crashes on startup. DT_RPATH is transitive and is also
-# searched for dlopen from libraries in the chain, so the whole ES process stays on g13p0
-# (verified empirically) — matching the old LD_LIBRARY_PATH behavior without the leak.
-# Idempotent, so safe on cache hits too.
-if [ "$CHIPSET" == "rk3562" ]; then
-  sudo patchelf --force-rpath --set-rpath '/opt/emulationstation/lib' Arkbuild/usr/bin/emulationstation/emulationstation
-  verify_action
-fi
+# RK3562: ES runs on the system Mali (g29p1) like every other app. No DT_RPATH
+# override is needed anymore — g29p1's GLES 1.0 works, so the old g13p0-for-ES
+# split (and the leak it caused into spawned emulators) is gone.
 
 sudo rm -rf Arkbuild/home/ark/EmulationStation-fcamod
 sudo mkdir -p Arkbuild/etc/emulationstation/themes

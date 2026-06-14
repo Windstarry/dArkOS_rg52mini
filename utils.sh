@@ -37,9 +37,12 @@ fi
 if [ "$CHIPSET" == "rk3326" ]; then
   export whichmali=libmali-bifrost-g31-rxp0-gbm.so
 elif [ "$CHIPSET" == "rk3562" ]; then
-  # RK3562 uses BSP g24p0 Mali (GLES + Vulkan 1.3). ES gets g13p0 via LD_LIBRARY_PATH
-  # because g24p0 has broken GLES 1.0 glDrawArrays (crashes ES loading screen).
-  export whichmali=libmali.so.1.9.0
+  # RK3562 64-bit uses BSP libmali g29p1 (GLES 1.0/2/3 + EGL + gbm + OpenCL + Vulkan
+  # ICD), system-wide including EmulationStation — g29p1 fixes the GLES 1.0 glDrawArrays
+  # crash that previously forced the g24p0(system)+g13p0(ES) dual-blob split.
+  # NOTE: this is the 64-bit blob; 32-bit armhf stays on g13p0 (the 32-bit g29p1
+  # blob SIGSEGVs inside libmali during GL setup). See build_deps.sh / utils.sh32.
+  export whichmali=libmali-bifrost-g52-g29p1.so
   export whichmali_bsp=true
 else
   export whichmali=libmali-bifrost-g52-g13p0-gbm.so
@@ -138,7 +141,8 @@ function setup_arkbuild32() {
     fi
     sudo cp -a Arkbuild32/home/ark/libgo2/libgo2.so* Arkbuild/usr/lib/arm-linux-gnueabihf/
     # Place libmali manually for 32-bit chroot
-    # 32-bit always uses g13p0 from core_builds (no 32-bit BSP blob)
+    # 32-bit stays on g13p0 from core_builds: the 32-bit g29p1 blob SIGSEGVs inside
+    # libmali during GL/shader setup (SEGV_ACCERR), so only 64-bit moves to g29p1.
     sudo mkdir -p Arkbuild32/usr/lib/arm-linux-gnueabihf/
     if [ "${whichmali_bsp}" == "true" ]; then
       MALI32=libmali-bifrost-g52-g13p0-gbm.so

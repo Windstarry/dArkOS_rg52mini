@@ -285,8 +285,8 @@ if [[ "${BUILD_ARMHF}" == "y" ]]; then
 		if [ -f "Arkbuild_package_cache/${CHIPSET}/retroarch32_${UNIT}.commit" ]; then
 	      sudo rm -f Arkbuild_package_cache/${CHIPSET}/retroarch32_${UNIT}.commit
 		fi
+		# 32-bit RetroArch bundles g13p0 on rk3562 (the 32-bit g29p1 blob crashes); 64-bit uses $whichmali
 		if [ "${whichmali_bsp}" == "true" ]; then
-		  # BSP Mali: 64-bit uses $whichmali, 32-bit armhf uses g13p0 from core_builds
 		  MALI_LIB="libmali-bifrost-g52-g13p0-gbm.so"
 		else
 		  MALI_LIB="${whichmali}"
