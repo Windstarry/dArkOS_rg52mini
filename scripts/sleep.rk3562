@@ -47,6 +47,9 @@ case $1 in
     cat /sys/class/gpio/gpio97/value > /var/local/led_red.state 2>/dev/null
     echo 0 > /sys/class/gpio/gpio96/value 2>/dev/null
     echo 0 > /sys/class/gpio/gpio97/value 2>/dev/null
+
+    # Power down the stick-RGB LED MCU during sleep (no-op unless configured)
+    [ -f /home/ark/.config/led.cfg ] && /usr/local/bin/ledctl suspend 2>/dev/null
     ;;
 
    post)
@@ -64,6 +67,9 @@ case $1 in
     else
       echo 0 > /sys/class/gpio/gpio97/value 2>/dev/null
     fi
+
+    # Restore the stick-RGB LED state on wake (no-op unless configured)
+    [ -f /home/ark/.config/led.cfg ] && /usr/local/bin/ledctl apply 2>/dev/null
 
     # Restore brightness
     echo $(cat /var/local/cur_bright.state) | sudo tee /sys/class/backlight/backlight/brightness

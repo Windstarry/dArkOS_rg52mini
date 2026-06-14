@@ -235,6 +235,15 @@ fi
 if [ "$UNIT" == "rg43h" ] || [ "$UNIT" == "rg43v" ]; then
   sudo cp "dArkOS_Tools/rk3562/Left Stick Invert Toggle.sh" Arkbuild/opt/system/Advanced/
 fi
+# Stick-RGB LED control (all RK3562 devices). Backend tool talks to the LED
+# MCU on /dev/ttyS1; led-state.service re-applies the saved colour at boot;
+# "LED Settings" is a dialog config program in the Options menu. Lighting is
+# OFF by default -- the service is a no-op until the user creates a config.
+sudo install -m 755 scripts/rk3562/ledctl.sh Arkbuild/usr/local/bin/ledctl
+sudo install -m 644 scripts/rk3562/led-state.service \
+    Arkbuild/etc/systemd/system/led-state.service
+sudo chroot Arkbuild/ bash -c "systemctl enable led-state"
+sudo cp "dArkOS_Tools/rk3562/LED Settings.sh" Arkbuild/opt/system/
 sudo cp dArkOS_Tools/Advanced/*.sh Arkbuild/opt/system/Advanced/
 sudo cp scripts/"Enable Quick Mode".sh Arkbuild/opt/system/Advanced/
 if [ -f "scripts/${CHIPSET}/Fix Audio.sh" ]; then
