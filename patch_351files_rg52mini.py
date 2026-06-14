@@ -14,7 +14,7 @@ indices from the retrogame_joypad (RG503).
     b8=SELECT    b9=START    b10=GUIDE(MODE)
     b11=L3(THUMBL) b12=R3(THUMBR)
     b13=DPadUp   b14=DPadDown b15=DPadLeft b16=DPadRight  b17=HAPPY1
-  L2/R2 analog are on hat2 (h2down/h2right); no secondary page key.
+  L2/R2 analog are on axes ABS_Z/ABS_RZ (joydev a2/a5); no secondary page key.
 """
 
 # --- Patch src/def.h ---
@@ -37,7 +37,7 @@ defh = defh.replace(
 #   b4=L1 b5=R1 b6=L2(TL2) b7=R2(TR2) b8=SELECT b9=START b10=GUIDE(MODE)
 #   b11=L3 b12=R3 b13=DPadUp b14=DPadDown b15=DPadLeft b16=DPadRight
 #
-# L2/R2 analog are on hat2 (h2down/h2right) — no secondary page key.
+# L2/R2 analog are on axes ABS_Z/ABS_RZ (joydev a2/a5) — no secondary page key.
 
 rk3562_button_block = """\
 #elif defined(DEVICE_RG56PRO) || defined(DEVICE_RG43H)

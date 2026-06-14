@@ -1682,4 +1682,4 @@ xinput,XInput Controller,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,
 # (1900a4dd... = bus 0x19 + crc16("rk3562-joystick") + name) but enumerates the raw buttons
 # differently: SDL-A is raw b1 here (vs b0 under SDL2 -- see inttools/gamecontrollerdb.txt).
 # Both land SDL-A on the bottom/South button; the index differs by SDL major version.
-1900a4dd726b333536322d6a6f797300,rk3562-joystick,a:b1,b:b0,x:b3,y:b2,back:b8,start:b9,guide:b10,misc1:b17,leftstick:b11,rightstick:b12,dpup:b13,dpdown:b14,dpleft:b15,dpright:b16,leftshoulder:b4,rightshoulder:b5,lefttrigger:a5,righttrigger:a4,leftx:a0,lefty:a1,rightx:a2,righty:a3,platform:Linux,
+1900a4dd726b333536322d6a6f797300,rk3562-joystick,a:b1,b:b0,x:b3,y:b2,back:b8,start:b9,guide:b10,misc1:b17,leftstick:b11,rightstick:b12,dpup:b13,dpdown:b14,dpleft:b15,dpright:b16,leftshoulder:b4,rightshoulder:b5,lefttrigger:a2,righttrigger:a5,leftx:a0,lefty:a1,rightx:a3,righty:a4,platform:Linux,
