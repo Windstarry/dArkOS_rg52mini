@@ -30,6 +30,14 @@ elif [[ -e "/dev/input/by-path/platform-singleadc-joypad-event-joystick" ]]; the
       event_btn_hk="BTN_THUMBR"
     fi
   fi
+elif [[ -e "/dev/input/by-path/platform-play_joystick-event-joystick" ]]; then
+  # RK3562 devices (RG52 Mini, RG43H/V Pro) use the custom rk3562-joystick
+  # driver (DT node "play_joystick"). Resolve its event device dynamically:
+  # the default event_num=3 points at the wrong device, so evtest --query
+  # never returns 10 and the button-wait loops in the control-reset tools
+  # (Restore Default PPSSPP Controls, etc.) hang at "Press A to continue".
+  # The default BTN_EAST=A / BTN_SOUTH=B already match this pad.
+  event_num=$(readlink /dev/input/by-path/platform-play_joystick-event-joystick | grep -o '[0-9]*$')
 fi
 
 function Test_Button_A(){
