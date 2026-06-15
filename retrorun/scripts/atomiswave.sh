@@ -12,7 +12,12 @@ sudo systemctl restart killer_daemon.service
 rm -rf "/home/ark/.local/share/flycast"
 directory=$(dirname "$2" | cut -d "/" -f2)
 ln -sf "/$directory/bios/dc" "/home/ark/.local/share/flycast"
-if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
+if [[ -e "/dev/input/by-path/platform-play_joystick-event-joystick" ]]; then
+  # RK3562 (rk3562-joystick / play_joystick driver) -- follows the c204989 pattern.
+  # flycast-sa is SDL2, so use the SDL2 button order (a:b0,b:b1) from
+  # inttools/gamecontrollerdb.txt for GUID 1900a4dd726b333536322d6a6f797300.
+  sdl_controllerconfig="1900a4dd726b333536322d6a6f797300,rk3562-joystick,a:b0,b:b1,x:b2,y:b3,back:b8,start:b9,guide:b10,misc1:b17,leftstick:b11,rightstick:b12,dpup:b13,dpdown:b14,dpleft:b15,dpright:b16,leftshoulder:b4,rightshoulder:b5,lefttrigger:a2,righttrigger:a5,leftx:a0,lefty:a1,rightx:a3,righty:a4,platform:Linux,"
+elif [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
   sdl_controllerconfig="03000000091200000031000011010000,OpenSimHardware OSH PB Controller,a:b0,b:b1,x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftx:a0~,lefty:a1~,leftstick:b8,lefttrigger:b10,rightstick:b9,back:b7,start:b6,rightx:a2,righty:a3,righttrigger:b11,platform:Linux,"
 elif [[ -e "/dev/input/by-path/platform-odroidgo2-joypad-event-joystick" ]]; then
   if [[ ! -z $(cat /etc/emulationstation/es_input.cfg | grep "190000004b4800000010000001010000") ]]; then
@@ -41,6 +46,13 @@ if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick"
   #sleep 0.2
   ESUDO="sudo --preserve-env=DEVICE_NAME"
   DEVICENAME="RG351V"
+elif compgen -G "/boot/rk3562*" > /dev/null; then
+  # RK3562 (RG52 Mini / RG43H Pro) -- follows the c204989 pattern. The gamepad is
+  # the rk3562-joystick (play_joystick) driver, not any rk3566/rk3326 pad. retrorun
+  # reads its screen resolution from libgo2/DRM, not from DEVICE_NAME; DEVICE_NAME only
+  # selects device quirks (rotation etc.). Both RK3562 panels are presented landscape,
+  # so use a non-rotated profile (RG351P keeps hasDeviceRotatedScreen() == false).
+  DEVICENAME="RG351P"
 elif compgen -G "/boot/rk3566*" > /dev/null; then
   if test ! -z "$(grep "RG353V" /home/ark/.config/.DEVICE | tr -d '\0')"
   then
@@ -99,6 +111,13 @@ if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick"
   #sleep 0.2
   ESUDO="sudo --preserve-env=DEVICE_NAME"
   DEVICENAME="RG351V"
+elif compgen -G "/boot/rk3562*" > /dev/null; then
+  # RK3562 (RG52 Mini / RG43H Pro) -- follows the c204989 pattern. The gamepad is
+  # the rk3562-joystick (play_joystick) driver, not any rk3566/rk3326 pad. retrorun
+  # reads its screen resolution from libgo2/DRM, not from DEVICE_NAME; DEVICE_NAME only
+  # selects device quirks (rotation etc.). Both RK3562 panels are presented landscape,
+  # so use a non-rotated profile (RG351P keeps hasDeviceRotatedScreen() == false).
+  DEVICENAME="RG351P"
 elif compgen -G "/boot/rk3566*" > /dev/null; then
   if test ! -z "$(grep "RG353V" /home/ark/.config/.DEVICE | tr -d '\0')"
   then

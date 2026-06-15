@@ -1,7 +1,15 @@
 #!/bin/bash
 
 res="480,320"
-if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
+if [[ -e "/dev/input/by-path/platform-play_joystick-event-joystick" ]]; then
+  # RK3562 (rk3562-joystick / play_joystick driver) -- follows the c204989 pattern.
+  # Button/axis codes match the rg503 profile, so reuse param_device=rg503 and derive
+  # the screen resolution from fb0 modes exactly as the rg503 branch below does.
+  param_device="rg503"
+  xres="$(cat /sys/class/graphics/fb0/modes | grep -o -P '(?<=:).*(?=p-)' | cut -dx -f1)"
+  yres="$(cat /sys/class/graphics/fb0/modes | grep -o -P '(?<=:).*(?=p-)' | cut -dx -f2)"
+  res="${xres},${yres}"
+elif [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
   param_device="anbernic"
   if [ -f "/boot/rk3326-rg351v-linux.dtb" ]; then
     res="640,480"
@@ -41,7 +49,8 @@ echo "19000000030000000300000002030000,gameforce_gamepad,leftstick:b14,rightx:a3
 190000004b4800000010000001010000,GO-Advance Gamepad (rev 1.1),a:b1,b:b0,x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,dpdown:b9,dpleft:b10,dpright:b11,dpup:b8,leftx:a0,lefty:a1,guide:b12,leftstick:b14,lefttrigger:b13,rightstick:b15,righttrigger:b16,start:b17,platform:Linux,
 190000004b4800000011000000010000,GO-Super Gamepad,x:b2,a:b1,b:b0,y:b3,back:b12,start:b13,dpleft:b10,dpdown:b9,dpright:b11,dpup:b8,leftshoulder:b4,lefttrigger:b6,rightshoulder:b5,righttrigger:b7,leftstick:b14,rightstick:b15,leftx:a0,lefty:a1,rightx:a2,righty:a3,platform:Linux,
 03000000091200000031000011010000,OpenSimHardware OSH PB Controller,a:b1,b:b0,x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b7,leftstick:b14,lefttrigger:b13,rightstick:b15,righttrigger:b16,leftx:a0~,lefty:a1~,start:b6,platform:Linux,
-190000004b4800000111000000010000,retrogame_joypad,a:b1,b:b0,x:b2,y:b3,back:b8,start:b9,rightstick:b12,leftstick:b11,dpleft:b15,dpdown:b14,dpright:b16,dpup:b13,leftshoulder:b4,lefttrigger:b6,rightshoulder:b5,righttrigger:b7,leftx:a0,lefty:a1,rightx:a2,righty:a3,platform:Linux," > /$directory/pico-8/sdl_controllers.txt
+190000004b4800000111000000010000,retrogame_joypad,a:b1,b:b0,x:b2,y:b3,back:b8,start:b9,rightstick:b12,leftstick:b11,dpleft:b15,dpdown:b14,dpright:b16,dpup:b13,leftshoulder:b4,lefttrigger:b6,rightshoulder:b5,righttrigger:b7,leftx:a0,lefty:a1,rightx:a2,righty:a3,platform:Linux,
+1900a4dd726b333536322d6a6f797300,rk3562-joystick,a:b0,b:b1,x:b2,y:b3,back:b8,start:b9,guide:b10,misc1:b17,leftstick:b11,rightstick:b12,dpup:b13,dpdown:b14,dpleft:b15,dpright:b16,leftshoulder:b4,rightshoulder:b5,lefttrigger:a2,righttrigger:a5,leftx:a0,lefty:a1,rightx:a3,righty:a4,platform:Linux," > /$directory/pico-8/sdl_controllers.txt
 fi
 
 if [[ -f "/$directory/pico-8/pico8_64" ]]; then

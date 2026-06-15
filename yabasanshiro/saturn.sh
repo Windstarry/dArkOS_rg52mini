@@ -47,7 +47,12 @@ elif [[ $1 == "retrorun" ]]; then
     sleep 10
     printf "\033[0m" >> /dev/tty1
   fi
-  if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
+  if [[ -e "/dev/input/by-path/platform-play_joystick-event-joystick" ]]; then
+    # RK3562 (rk3562-joystick / play_joystick driver) -- follows the c204989 pattern.
+    # retrorun reads the real gamepad at platform-play_joystick-event-joystick directly,
+    # so skip the OSH rg351p-js2xbox fake-joypad / odroidgo2 symlink shim entirely.
+    /usr/local/bin/retrorun -n -s /$directory/saturn -d /$directory/bios /home/ark/.config/retroarch/cores/"$2"_libretro.so "$3"
+  elif [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
     sudo rg351p-js2xbox --silent -t oga_joypad &
     sleep 1
     sudo ln -s /dev/input/event4 /dev/input/by-path/platform-odroidgo2-joypad-event-joystick
@@ -69,7 +74,12 @@ else
     sleep 10
     printf "\033[0m" >> /dev/tty1
   fi
-  if [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
+  if [[ -e "/dev/input/by-path/platform-play_joystick-event-joystick" ]]; then
+    # RK3562 (rk3562-joystick / play_joystick driver) -- follows the c204989 pattern.
+    # retrorun reads the real gamepad at platform-play_joystick-event-joystick directly,
+    # so skip the OSH rg351p-js2xbox fake-joypad / odroidgo2 symlink shim entirely.
+    /usr/local/bin/retrorun32 -n -s /$directory/saturn -d /$directory/bios /home/ark/.config/retroarch32/cores/"$2"_libretro.so "$3"
+  elif [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
     sudo rg351p-js2xbox --silent -t oga_joypad &
     sleep 1
     sudo ln -s /dev/input/event4 /dev/input/by-path/platform-odroidgo2-joypad-event-joystick
