@@ -300,7 +300,7 @@ Multitap2_Slot4_Filename = Mcd-Multitap2-Slot04.ps2
 
 
 [Folders]
-Bios = /roms/ps2/bios
+Bios = /roms/bios
 Snapshots = snaps
 Savestates = /roms/ps2/savestates
 MemoryCards = /roms/ps2/memcards

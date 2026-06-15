@@ -26,7 +26,9 @@ directory=$(dirname "$ROM" | cut -d "/" -f2)
 # uppercase PCSX2 dir is what pcsx2-sdl uses (XDG_CONFIG_HOME/PCSX2); we
 # symlink the system path to the ROMs partition so saves, configs, BIOS
 # discovery and shader caches all land on the big exFAT partition.
-mkdir -p "/$directory/ps2/bios"
+# PS2 BIOS lives in the shared /roms/bios (matches PCSX2.ini Bios=), so it is
+# found regardless of which ROMs card the game is launched from.
+mkdir -p "/roms/bios"
 mkdir -p "/$directory/ps2/memcards"
 mkdir -p "/$directory/ps2/savestates"
 mkdir -p "/$directory/ps2/pcsx2/inis"
