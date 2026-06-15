@@ -79,8 +79,13 @@ call_chroot "apt remove -y autotools-dev \
   premake4 \
   rapidjson-dev \
   zlib1g-dev"
+# Fail the build if the dev-package removal failed (e.g. apt refused the whole
+# transaction because a listed package is pinned by a held dep — the silent
+# failure that once left ~670MB of dev packages in the image, see c9d776d).
+verify_action
 
 call_chroot "apt -y autoremove"
+verify_action
 call_chroot "apt -y clean"
 
 if [[ "${BUILD_ARMHF}" == "y" ]]; then
