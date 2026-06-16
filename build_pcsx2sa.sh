@@ -3,7 +3,7 @@
 # Build the bmdhacks PCSX2 fork's SDL3 frontend (binary "pcsx2-sdl") and
 # install it under /opt/pcsx2/.  Source:
 #
-#   https://git.sr.ht/~bmdhacks/pcsx2  branch vu-aot
+#   https://git.sr.ht/~bmdhacks/pcsx2  branch vu-jitcache
 #
 # Replaces the abandoned binary AetherSX2 path (commit 0c660f1 on
 # branch aethersx2-attempt) — see /home/bmd/.claude/plans/ok-so-i-ve-been-giggly-lagoon.md
@@ -17,7 +17,7 @@ if [ "$CHIPSET" != "rk3562" ]; then
 fi
 
 PCSX2_REMOTE="https://git.sr.ht/~bmdhacks/pcsx2"
-PCSX2_BRANCH="vu-aot"
+PCSX2_BRANCH="vu-jitcache"
 PCSX2_SRC="Arkbuild/home/ark/pcsx2"
 PCSX2_BUILD="/home/ark/pcsx2/build-${UNIT}"
 
