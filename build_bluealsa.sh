@@ -35,6 +35,7 @@ sudo cp bluetooth/scripts/bt* Arkbuild/usr/local/bin/
 sudo cp bluetooth/scripts/enable_bluetooth.sh Arkbuild/usr/local/bin/
 sudo cp bluetooth/scripts/watchforbtaudio.sh Arkbuild/usr/local/bin/
 sudo cp bluetooth/systemd/* Arkbuild/etc/systemd/system/
+sudo mkdir -p Arkbuild/etc/alsa/conf.d
 sudo cp bluetooth/config/20-bluealsa.conf Arkbuild/etc/alsa/conf.d/
 sudo chmod 777 Arkbuild/usr/local/bin/*
 sudo chmod -R 777 Arkbuild/opt/system/
