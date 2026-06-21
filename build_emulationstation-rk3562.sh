@@ -69,6 +69,20 @@ else
   sudo cp Emulationstation/es_input.cfg.353m Arkbuild/etc/emulationstation/es_input.cfg
 fi
 
+# Also ship es_input.cfg to ~/.config/emulationstation/ -- PortMaster's
+# control.txt/mapper.py builds the gamepad's SDL mapping from THIS path
+# (not ES's own ~/.emulationstation, and not /etc).  The rk3562-joystick
+# pad isn't in PortMaster's hardcoded device list, so this mapper.py
+# fallback is the only thing that maps it for ports; without the file
+# mapper.py is skipped and ports get no controller mapping.  The shipped
+# es_input.cfg carries the real deviceGUID (1900a4dd...) so the generated
+# mapping matches the device and L2/R2 (lefttrigger:a2/righttrigger:a5)
+# resolve.  ES itself does not read this path, so there is no conflict.
+sudo mkdir -p Arkbuild/home/ark/.config/emulationstation
+sudo cp Arkbuild/etc/emulationstation/es_input.cfg \
+  Arkbuild/home/ark/.config/emulationstation/es_input.cfg
+call_chroot "chown -R ark:ark /home/ark/.config/emulationstation"
+
 if [ -f "Emulationstation/es_settings.cfg.${UNIT}" ]; then
   sudo cp Emulationstation/es_settings.cfg.${UNIT} Arkbuild/home/ark/.emulationstation/es_settings.cfg
 else
