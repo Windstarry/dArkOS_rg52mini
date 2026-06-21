@@ -1,0 +1,58 @@
+From: dArkOS RK3562 <darkos@rk3562>
+Subject: Fix EGL display initialization for non-Mesa EGL (Mali/Rockchip g29p1)
+
+Kodi's GBM GLES windowing hardcodes EGL_MESA_platform_gbm as the platform
+extension, and falls back to eglGetDisplay(gbm_device_ptr) when the Mesa
+extension isn't advertised.
+
+On Mali Bifrost g29p1 (and other non-Mesa EGL implementations) this breaks:
+  - EGL_MESA_platform_gbm is not in the client extension list -> IsPlatformSupported() false
+  - eglGetDisplay(gbm_device_ptr) returns EGL_NO_DISPLAY (Mali EGL doesn't
+    accept GBM device pointers as native display handles)
+
+Mali g29p1 advertises EGL_KHR_platform_gbm (same enum value 0x31D7, different
+extension string). Switching to the KHR name makes IsPlatformSupported() true
+and eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR, ...) succeeds.
+
+Additionally add eglGetDisplay(EGL_DEFAULT_DISPLAY) as a final fallback in
+CreatePlatformDisplay for any EGL implementation that supports neither the
+platform extension nor native-handle display creation.
+---
+diff --git a/xbmc/windowing/gbm/WinSystemGbmGLESContext.cpp b/xbmc/windowing/gbm/WinSystemGbmGLESContext.cpp
+--- a/xbmc/windowing/gbm/WinSystemGbmGLESContext.cpp
++++ b/xbmc/windowing/gbm/WinSystemGbmGLESContext.cpp
+@@ -38,7 +38,7 @@
+ using namespace std::chrono_literals;
+
+ CWinSystemGbmGLESContext::CWinSystemGbmGLESContext()
+-: CWinSystemGbmEGLContext(EGL_PLATFORM_GBM_MESA, "EGL_MESA_platform_gbm")
++: CWinSystemGbmEGLContext(EGL_PLATFORM_GBM_KHR, "EGL_KHR_platform_gbm")
+ {}
+
+ void CWinSystemGbmGLESContext::Register()
+diff --git a/xbmc/utils/EGLUtils.cpp b/xbmc/utils/EGLUtils.cpp
+--- a/xbmc/utils/EGLUtils.cpp
++++ b/xbmc/utils/EGLUtils.cpp
+@@ -243,7 +243,21 @@
+
+   if (m_eglDisplay == EGL_NO_DISPLAY)
+   {
+-    return CreateDisplay(nativeDisplayLegacy);
++    // Try legacy path with the native display handle first (works on Mesa)
++    m_eglDisplay = eglGetDisplay(nativeDisplayLegacy);
++    if (m_eglDisplay == EGL_NO_DISPLAY)
++    {
++      // Final fallback for EGL implementations (e.g. Mali/Rockchip) that do not
++      // accept GBM device pointers as native display handles.  eglGetDisplay with
++      // EGL_DEFAULT_DISPLAY lets the driver auto-detect the DRM device; GBM
++      // surfaces are still passed as EGLNativeWindowType in CreateSurface.
++      m_eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
++    }
++    if (m_eglDisplay == EGL_NO_DISPLAY)
++    {
++      CEGLUtils::Log(LOGERROR, "failed to get EGL display");
++      return false;
++    }
+   }
+
+   return true;

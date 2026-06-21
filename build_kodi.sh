@@ -14,7 +14,7 @@ if [ "$UNIT" == "rg52mini" ]; then
 else
   KODI_ROT=0
 fi
-KODI_CACHE_KEY="${KODI_VERSION_TAG}-${UNIT}-rot${KODI_ROT}"
+KODI_CACHE_KEY="${KODI_VERSION_TAG}-${UNIT}-rot${KODI_ROT}-mali-egl3"
 mkdir -p Arkbuild_package_cache/${CHIPSET}
 
 # Install additional Kodi build dependencies
@@ -96,6 +96,14 @@ PRESEED
       sed -i '/binary-addons PREFIX/i bash /home/ark/preseed_addon_dl.sh' ArkOS-Kodi-Build-alt.sh &&
       chmod 777 ArkOS-Kodi-Build-alt.sh
       "
+
+    # All RK3562 devices: fix EGL display init for Mali g29p1. Kodi hardcodes
+    # EGL_MESA_platform_gbm which Mali doesn't advertise; fallback eglGetDisplay
+    # with a GBM device pointer also fails. Patch uses EGL_KHR_platform_gbm
+    # (same enum, non-Mesa name) and adds EGL_DEFAULT_DISPLAY as final fallback.
+    if [ "$CHIPSET" == "rk3562" ]; then
+      sudo cp kodi-patch-002-mali-egl-display.patch Arkbuild/home/ark/kodi/kodi-install/patches/
+    fi
 
     # RG52 Mini only: software-rotate kodi-gbm 90° via the Rockchip RGA. kodi-gbm
     # talks to GBM/KMS directly and bypasses the patched SDL2 that rotates every
