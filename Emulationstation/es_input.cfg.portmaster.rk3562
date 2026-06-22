@@ -2,24 +2,27 @@
 <!--
   PortMaster-ONLY es_input for the rk3562-joystick.  Do NOT use this for ES.
 
-  This file exists solely to be copied to ~/.config/emulationstation/es_input.cfg
-  so PortMaster's control.txt runs mapper.py on it.  mapper.py hardcodes a TR_MAP
-  that swaps a<->b and x<->y (it assumes a Nintendo-labelled es_input and emits an
-  Xbox-positional SDL gamecontrollerdb mapping).  After the compass-correct kernel
-  (A=East=BTN_EAST/305=SDL2 b1, B=South=BTN_SOUTH/304=b0), to make mapper.py's
-  OUTPUT put SDL-A on the physical A (East) button -- matching every other emulator
-  on this device -- we feed it the INVERSE of what ES uses: an Xbox-positional block
+  Copied to ~/.config/emulationstation/es_input.cfg so PortMaster's control.txt
+  feeds it to mapper.py (ES itself reads /etc/emulationstation/ + ~/.emulationstation/,
+  NOT ~/.config/emulationstation/, so this only affects PortMaster).
+
+  mapper.py (/opt/system/Tools/PortMaster/mapper.py) CONFIRMED 2026-06-22: TR_MAP
+  SWAPS a<->b and x<->y, and for ES <input name=N id=I type=button> it writes
+  "<TR_MAP[N]>:b<I>" into the SDL gamecontrollerdb.  So to make SDL-A land on the
+  physical A (East = raw b1) button, we feed an Xbox-positional block -- name "a"
+  on the SOUTH button (id0) and name "b" on the EAST button (id1):
 
     a = South (id0/304),  b = East (id1/305),  x = West (id3/308),  y = North (id2/307)
 
-  mapper.py then emits  a:b1,b:b0,x:b2,y:b3  (East=SDL-A, North=SDL-X).
+  mapper.py then emits  b:b0, a:b1, y:b3, x:b2  =>  a:b1,b:b0,x:b2,y:b3
+  (East=SDL-A, South=SDL-B, North=SDL-X, West=SDL-Y) -- matching every other emulator.
 
-  Shipping the normal Nintendo-labelled /etc/emulationstation/es_input.cfg here
-  instead would make mapper.py emit South=SDL-A -- i.e. physical A (East) acting as
-  SDL-B in ports, the bug commit 6d4c55b introduced.  Everything except the four
-  face buttons is identical to the ES es_input block.
+  NOTE: this only takes effect if SDL actually matches deviceGUID below to the pad at
+  runtime AND mapper.py's output db is the one the port's SDL loads. If ports still
+  show A/B swapped with this file, the failure is GUID-mismatch / db-not-loaded, not
+  the a/b orientation here.
 
-  If ports ever come up with A/B reversed, the live fix is:
+  Live fallback if ports come up reversed:
     rm ~/.config/emulationstation/es_input.cfg   (reverts ports to bare SDL2 auto-map)
 -->
 <inputList>
