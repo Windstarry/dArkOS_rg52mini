@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<!--
+  PortMaster-ONLY es_input for the rk3562-joystick.  Do NOT use this for ES.
+
+  This file exists solely to be copied to ~/.config/emulationstation/es_input.cfg
+  so PortMaster's control.txt runs mapper.py on it.  mapper.py hardcodes a TR_MAP
+  that swaps a<->b and x<->y (it assumes a Nintendo-labelled es_input and emits an
+  Xbox-positional SDL gamecontrollerdb mapping).  After the compass-correct kernel
+  (A=East=BTN_EAST/305=SDL2 b1, B=South=BTN_SOUTH/304=b0), to make mapper.py's
+  OUTPUT put SDL-A on the physical A (East) button -- matching every other emulator
+  on this device -- we feed it the INVERSE of what ES uses: an Xbox-positional block
+
+    a = South (id0/304),  b = East (id1/305),  x = West (id3/308),  y = North (id2/307)
+
+  mapper.py then emits  a:b1,b:b0,x:b2,y:b3  (East=SDL-A, North=SDL-X).
+
+  Shipping the normal Nintendo-labelled /etc/emulationstation/es_input.cfg here
+  instead would make mapper.py emit South=SDL-A -- i.e. physical A (East) acting as
+  SDL-B in ports, the bug commit 6d4c55b introduced.  Everything except the four
+  face buttons is identical to the ES es_input block.
+
+  If ports ever come up with A/B reversed, the live fix is:
+    rm ~/.config/emulationstation/es_input.cfg   (reverts ports to bare SDL2 auto-map)
+-->
+<inputList>
+	<inputConfig type="joystick" deviceName="rk3562-joystick" deviceGUID="1900a4dd726b333536322d6a6f797300">
+		<input name="a" type="button" id="0" value="1" code="304" />
+		<input name="b" type="button" id="1" value="1" code="305" />
+		<input name="down" type="button" id="14" value="1" code="545" />
+		<input name="hotkey" type="button" id="8" value="1" code="314" />
+		<input name="left" type="button" id="15" value="1" code="546" />
+		<input name="leftshoulder" type="button" id="4" value="1" code="310" />
+		<input name="leftthumb" type="button" id="11" value="1" code="317" />
+		<input name="lefttrigger" type="axis" id="2" value="1" code="2" />
+		<input name="pagedown" type="button" id="5" value="1" code="311" />
+		<input name="pageup" type="button" id="4" value="1" code="310" />
+		<input name="right" type="button" id="16" value="1" code="547" />
+		<input name="rightshoulder" type="button" id="5" value="1" code="311" />
+		<input name="rightthumb" type="button" id="12" value="1" code="318" />
+		<input name="righttrigger" type="axis" id="5" value="1" code="5" />
+		<input name="select" type="button" id="8" value="1" code="314" />
+		<input name="start" type="button" id="9" value="1" code="315" />
+		<input name="up" type="button" id="13" value="1" code="544" />
+		<input name="x" type="button" id="3" value="1" code="308" />
+		<input name="y" type="button" id="2" value="1" code="307" />
+		<input name="leftanalogup" type="axis" id="1" value="-1" code="1" />
+		<input name="leftanalogdown" type="axis" id="1" value="1" code="1" />
+		<input name="leftanalogleft" type="axis" id="0" value="-1" code="0" />
+		<input name="leftanalogright" type="axis" id="0" value="1" code="0" />
+		<input name="rightanalogup" type="axis" id="4" value="-1" code="4" />
+		<input name="rightanalogdown" type="axis" id="4" value="1" code="4" />
+		<input name="rightanalogleft" type="axis" id="3" value="-1" code="3" />
+		<input name="rightanalogright" type="axis" id="3" value="1" code="3" />
+	</inputConfig>
+</inputList>

@@ -69,19 +69,23 @@ else
   sudo cp Emulationstation/es_input.cfg.353m Arkbuild/etc/emulationstation/es_input.cfg
 fi
 
-# Also ship es_input.cfg to ~/.config/emulationstation/ -- PortMaster's
-# control.txt/mapper.py builds the gamepad's SDL mapping from THIS path
-# (not ES's own ~/.emulationstation, and not /etc).  The rk3562-joystick
-# pad isn't in PortMaster's hardcoded device list, so this mapper.py
-# fallback is the only thing that maps it for ports; without the file
-# mapper.py is skipped and ports get no controller mapping.  The shipped
-# es_input.cfg carries the real deviceGUID (1900a4dd...) so the generated
-# mapping matches the device and L2/R2 (lefttrigger:a2/righttrigger:a5)
-# resolve.  ES itself does not read this path, so there is no conflict.
-sudo mkdir -p Arkbuild/home/ark/.config/emulationstation
-sudo cp Arkbuild/etc/emulationstation/es_input.cfg \
-  Arkbuild/home/ark/.config/emulationstation/es_input.cfg
-call_chroot "chown -R ark:ark /home/ark/.config/emulationstation"
+# Ship a PortMaster-specific es_input to ~/.config/emulationstation/ so that
+# PortMaster's control.txt runs mapper.py on it.  The kernel now emits
+# compass-correct codes (A=East=BTN_EAST/305=SDL2 b1, B=South=BTN_SOUTH/304=b0),
+# so bare SDL2 auto-map gives SDL-A=South -- i.e. pressing physical A (East) would
+# act as SDL-B in ports (the "A acts as B" symptom).  mapper.py hardcodes an
+# a<->b / x<->y swap, so we feed it the INVERSE (Xbox-positional: a=South, b=East,
+# x=West, y=North) and it emits a:b1,b:b0,x:b2,y:b3 = East=SDL-A, matching every
+# other emulator.  NOTE: this is a DIFFERENT file from the Nintendo-labelled
+# /etc/emulationstation/es_input.cfg used for ES menu nav; shipping THAT here would
+# make mapper.py emit South=SDL-A.  ES does not read ~/.config/emulationstation/,
+# so this only affects PortMaster.  See es_input.cfg.portmaster.rk3562 for details.
+if [ -f "Emulationstation/es_input.cfg.portmaster.${CHIPSET}" ]; then
+  sudo mkdir -p Arkbuild/home/ark/.config/emulationstation
+  sudo cp Emulationstation/es_input.cfg.portmaster.${CHIPSET} \
+    Arkbuild/home/ark/.config/emulationstation/es_input.cfg
+  call_chroot "chown -R ark:ark /home/ark/.config/emulationstation"
+fi
 
 if [ -f "Emulationstation/es_settings.cfg.${UNIT}" ]; then
   sudo cp Emulationstation/es_settings.cfg.${UNIT} Arkbuild/home/ark/.emulationstation/es_settings.cfg

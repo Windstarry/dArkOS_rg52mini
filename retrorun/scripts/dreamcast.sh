@@ -15,9 +15,9 @@ directory=$(dirname "$2" | cut -d "/" -f2)
 ln -sf "/$directory/bios/dc" "/home/ark/.local/share/flycast"
 if [[ -e "/dev/input/by-path/platform-play_joystick-event-joystick" ]]; then
   # RK3562 (rk3562-joystick / play_joystick driver) -- follows the c204989 pattern.
-  # flycast-sa is SDL2, so use the SDL2 button order (a:b0,b:b1) from
+  # flycast-sa is SDL2, so use the SDL2 button order (a:b1,b:b0) from
   # inttools/gamecontrollerdb.txt for GUID 1900a4dd726b333536322d6a6f797300.
-  sdl_controllerconfig="1900a4dd726b333536322d6a6f797300,rk3562-joystick,a:b0,b:b1,x:b2,y:b3,back:b8,start:b9,guide:b10,misc1:b17,leftstick:b11,rightstick:b12,dpup:b13,dpdown:b14,dpleft:b15,dpright:b16,leftshoulder:b4,rightshoulder:b5,lefttrigger:a2,righttrigger:a5,leftx:a0,lefty:a1,rightx:a3,righty:a4,platform:Linux,"
+  sdl_controllerconfig="1900a4dd726b333536322d6a6f797300,rk3562-joystick,a:b1,b:b0,x:b2,y:b3,back:b8,start:b9,guide:b10,misc1:b17,leftstick:b11,rightstick:b12,dpup:b13,dpdown:b14,dpleft:b15,dpright:b16,leftshoulder:b4,rightshoulder:b5,lefttrigger:a2,righttrigger:a5,leftx:a0,lefty:a1,rightx:a3,righty:a4,platform:Linux,"
 elif [[ -e "/dev/input/by-path/platform-ff300000.usb-usb-0:1.2:1.0-event-joystick" ]]; then
   sdl_controllerconfig="03000000091200000031000011010000,OpenSimHardware OSH PB Controller,a:b0,b:b1,x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftx:a0~,lefty:a1~,leftstick:b8,lefttrigger:b10,rightstick:b9,back:b7,start:b6,rightx:a2,righty:a3,righttrigger:b11,platform:Linux,"
 elif [[ -e "/dev/input/by-path/platform-odroidgo2-joypad-event-joystick" ]]; then

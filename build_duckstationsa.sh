@@ -26,7 +26,7 @@ sudo cp duckstation/configs/settings.ini.${UNIT} Arkbuild/home/ark/.local/share/
 # read in preference to the AppImage's bundled gamecontrollerdb.txt) so SDL3
 # recognizes the built-in rk3562-joystick as a gamepad. vendor/product=0 means
 # SDL derives a name-based GUID. NOTE: DuckStation bundles SDL3, which enumerates this pad's
-# raw buttons differently than SDL2, so it needs the SDL3-order entry (a:b1,b:b0). Use the
+# raw buttons differently than SDL2, so it needs the SDL3-order entry (a:b0,b:b1). Use the
 # DuckStation-specific db -- NOT inttools/ (which carries the SDL2 order for gptokeyb et al,
 # and would swap A/B here).
 sudo cp duckstation/configs/gamecontrollerdb.txt Arkbuild/home/ark/.local/share/duckstation/gamecontrollerdb.txt
