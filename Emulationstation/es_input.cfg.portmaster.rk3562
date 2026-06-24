@@ -9,13 +9,13 @@
   mapper.py (/opt/system/Tools/PortMaster/mapper.py) CONFIRMED 2026-06-22: TR_MAP
   SWAPS a<->b and x<->y, and for ES <input name=N id=I type=button> it writes
   "<TR_MAP[N]>:b<I>" into the SDL gamecontrollerdb.  So to make SDL-A land on the
-  physical A (East = raw b1) button, we feed an Xbox-positional block -- name "a"
+  physical A (East = raw b1) button, we feed an Xbox-positional block - name "a"
   on the SOUTH button (id0) and name "b" on the EAST button (id1):
 
     a = South (id0/304),  b = East (id1/305),  x = West (id3/308),  y = North (id2/307)
 
   mapper.py then emits  b:b0, a:b1, y:b3, x:b2  =>  a:b1,b:b0,x:b2,y:b3
-  (East=SDL-A, South=SDL-B, North=SDL-X, West=SDL-Y) -- matching every other emulator.
+  (East=SDL-A, South=SDL-B, North=SDL-X, West=SDL-Y) - matching every other emulator.
 
   NOTE: this only takes effect if SDL actually matches deviceGUID below to the pad at
   runtime AND mapper.py's output db is the one the port's SDL loads. If ports still

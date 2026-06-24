@@ -81,6 +81,12 @@ fi
 # make mapper.py emit South=SDL-A.  ES does not read ~/.config/emulationstation/,
 # so this only affects PortMaster.  See es_input.cfg.portmaster.rk3562 for details.
 if [ -f "Emulationstation/es_input.cfg.portmaster.${CHIPSET}" ]; then
+  # mapper.py parses this with python xml.etree; it MUST be well-formed XML or it
+  # crashes, the pad is left unmapped, and ports fall back to auto-map (A/B reversed).
+  # A stray double-hyphen inside the XML comment is enough to break it -- guard here
+  # so a malformed es_input fails the build loudly instead of shipping silently broken.
+  python3 -c "import xml.etree.ElementTree as ET; ET.parse('Emulationstation/es_input.cfg.portmaster.${CHIPSET}')"
+  verify_action
   sudo mkdir -p Arkbuild/home/ark/.config/emulationstation
   sudo cp Emulationstation/es_input.cfg.portmaster.${CHIPSET} \
     Arkbuild/home/ark/.config/emulationstation/es_input.cfg
